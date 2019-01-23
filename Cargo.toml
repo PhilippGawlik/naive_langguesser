@@ -4,3 +4,4 @@ version = "0.1.0"
 authors = ["Philipp Gawlik <philipp.gawlik@googlemail.com>"]
 
 [dependencies]
+clap = {version = "2.32", features = ["yaml"]}

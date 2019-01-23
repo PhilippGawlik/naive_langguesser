@@ -1,0 +1,31 @@
+name: Naive Language Guesser
+version: "0.1"
+author: Philipp Gawlik <philipp.gawlik@googlemail.com>
+about: Guesses a language from a text file
+args:
+subcommands: 
+    - model:
+        about: Generate a new language models from a example text
+        version: "0.1"
+        author: Philipp Gawlik <philipp.gawlik@googlemail.com>
+        args:
+            - language-artifact:
+                short: a
+                long: language-artifact
+                value_name: language-artifact
+                required: true
+                takes_value: true
+                help: Specifies the path to a text file holding a language artifact
+            - model-name:
+                short: n
+                long: model-name
+                value_name: model-name
+                required: true
+                takes_value: true
+                help: Specifies name for generated model
+            - verbose:
+                short: v
+                long: verbose
+                multiple: true
+                takes_value: false
+                help: Sets the level of verbosity

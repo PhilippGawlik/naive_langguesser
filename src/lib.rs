@@ -1,3 +1,5 @@
+extern crate clap;
+
 use std::collections::HashMap;
 use std::error::Error;
 use std::fs;
@@ -5,46 +7,26 @@ use std::fs;
 
 
 pub struct Config {
+    verbose: bool,
     filename: String,
     modelname: String,
 }
 
 impl Config {
-    pub fn new(mut args: std::env::Args) -> Result<Config, &'static str> {
-        args.next();
-        let filename = match args.next() {
-            Some(arg) => arg,
-            None => return Err("Did not get a filename argument!"),
+    pub fn new(matches: &clap::ArgMatches) -> Result<Config, &'static str> {
+        let model_matches = matches.subcommand_matches("model").unwrap();
+        let modelname = match model_matches.value_of("model-name"){
+            Some(modelname) => format!("data/models/{}.model", modelname),
+            None => panic!("No modelname found"),
         };
-        let modelname = match args.next() {
-            Some(arg) => arg,
-            None => return Err("Did not get a modelname argument!"),
+        let filename = match model_matches.value_of("language-artifact"){
+            Some(filename) => filename.to_string(),
+            None => panic!("No language-artifact found"),
         };
-        Ok(Config {
-            filename,
-            modelname,
-        })
+        let verbose = model_matches.is_present("verbose");
+        Ok(Config{verbose, filename, modelname})
     }
 }
-
-//pub struct NGramCounter {
-    //counts: HashMap<char, i32>,
-    //use_loop: bool,
-//}
-
-//impl NGramCounter {
-
-    //pub fn new(n: i32) -> NGramCounter {
-        //if 0 > n || n > 3 {
-            //panic!("NGram size needs to be 0 < n < 5. Currently is {}", n);
-        //}
-        //let counts: HashMap<NGram, i32> = HashMap::new();
-        //NGramCounter{counts, n}
-    //}
-
-    
-    //}
-//}
 
 
 fn get_threegram_iter<'a>(content: &'a str) -> impl Iterator<Item=(char, char, char)>  + 'a {
@@ -68,19 +50,19 @@ fn get_threegram_iter<'a>(content: &'a str) -> impl Iterator<Item=(char, char, c
     )
 }
 
-fn write_counts_to_file(counts: &HashMap<(char, char, char), i32>) {
+fn write_counts_to_file(counts: &HashMap<(char, char, char), i32>, config: &Config) {
     let mut write_buf = String::new();
     for ((lhs, mid, rhs), count) in counts {
         write_buf.push_str(
             &format!("{}{}{}\t{}", lhs, mid, rhs, count));
         write_buf.push_str(&String::from("\n"));
     };
-    fs::write("./test.txt", write_buf).expect("Unable to write file");
+    fs::write(config.modelname.clone(), write_buf).expect("Unable to write file");
 }
 
-pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
+pub fn model(config: &Config) -> Result<(), Box<dyn Error>> {
     let mut counts: HashMap<(char, char, char), i32> = HashMap::new();
-    let content = fs::read_to_string(config.filename)
+    let content = fs::read_to_string(&config.filename)
         .expect("Something went wrong")
         .replace("\n", "");
     let _ = get_threegram_iter(&content).map(|ngram| {
@@ -88,7 +70,7 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
         *count += 1;
         ngram})
         .collect::<Vec<_>>();    // collect ends mutable borrow of 'counts' and is necessary therefor
-    write_counts_to_file(&counts);
+    write_counts_to_file(&counts, &config);
     Ok(())
 }
 
