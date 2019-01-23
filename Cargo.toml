@@ -1,0 +1,6 @@
+[package]
+name = "naive_langguesser"
+version = "0.1.0"
+authors = ["Philipp Gawlik <philipp.gawlik@googlemail.com>"]
+
+[dependencies]

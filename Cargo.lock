@@ -1,0 +1,4 @@
+[[package]]
+name = "naive_langguesser"
+version = "0.1.0"
+
