@@ -9,10 +9,10 @@ subcommands:
         version: "0.1"
         author: Philipp Gawlik <philipp.gawlik@googlemail.com>
         args:
-            - language-artifact:
-                short: a
-                long: language-artifact
-                value_name: language-artifact
+            - path:
+                short: p
+                long: path
+                value_name: path
                 required: true
                 takes_value: true
                 help: Specifies the path to a text file holding a language artifact
@@ -23,9 +23,3 @@ subcommands:
                 required: true
                 takes_value: true
                 help: Specifies name for generated model
-            - verbose:
-                short: v
-                long: verbose
-                multiple: true
-                takes_value: false
-                help: Sets the level of verbosity

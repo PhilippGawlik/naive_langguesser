@@ -1,13 +1,11 @@
 extern crate naive_langguesser;
-#[macro_use]
+#[macro_use]  // necessary for yaml config of clap
 extern crate clap;
 
 use std::process;
 use clap::App;
 use naive_langguesser::Config;
 
-// Todo
-// 1. introduce yaml to vim
 
 fn main() {
     let yaml = load_yaml!("../cli.yml");

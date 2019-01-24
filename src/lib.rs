@@ -7,7 +7,6 @@ use std::fs;
 
 
 pub struct Config {
-    verbose: bool,
     filename: String,
     modelname: String,
 }
@@ -15,16 +14,17 @@ pub struct Config {
 impl Config {
     pub fn new(matches: &clap::ArgMatches) -> Result<Config, &'static str> {
         let model_matches = matches.subcommand_matches("model").unwrap();
-        let modelname = match model_matches.value_of("model-name"){
-            Some(modelname) => format!("data/models/{}.model", modelname),
-            None => panic!("No modelname found"),
-        };
-        let filename = match model_matches.value_of("language-artifact"){
-            Some(filename) => filename.to_string(),
-            None => panic!("No language-artifact found"),
-        };
-        let verbose = model_matches.is_present("verbose");
-        Ok(Config{verbose, filename, modelname})
+        let modelname = format!(
+            "data/models/{}.model",
+            model_matches
+                .value_of("model-name")
+                .unwrap()  // clap ensures existing value
+                .to_string());
+        let filename = model_matches
+            .value_of("path")
+            .unwrap()  // clap ensures existing value
+            .to_string();
+        Ok(Config{filename, modelname})
     }
 }
 
@@ -50,27 +50,28 @@ fn get_threegram_iter<'a>(content: &'a str) -> impl Iterator<Item=(char, char, c
     )
 }
 
-fn write_counts_to_file(counts: &HashMap<(char, char, char), i32>, config: &Config) {
+fn write_counts_to_file(counts: &HashMap<(char, char, char), i32>, config: &Config) -> std::io::Result<()> {
     let mut write_buf = String::new();
     for ((lhs, mid, rhs), count) in counts {
         write_buf.push_str(
             &format!("{}{}{}\t{}", lhs, mid, rhs, count));
         write_buf.push_str(&String::from("\n"));
     };
-    fs::write(config.modelname.clone(), write_buf).expect("Unable to write file");
+    fs::write(&config.modelname, &write_buf)
 }
 
 pub fn model(config: &Config) -> Result<(), Box<dyn Error>> {
     let mut counts: HashMap<(char, char, char), i32> = HashMap::new();
     let content = fs::read_to_string(&config.filename)
-        .expect("Something went wrong")
+        .expect(&format!("Failed to read from {}", &config.filename))
         .replace("\n", "");
     let _ = get_threegram_iter(&content).map(|ngram| {
         let count = counts.entry(ngram).or_insert(0);
         *count += 1;
         ngram})
         .collect::<Vec<_>>();    // collect ends mutable borrow of 'counts' and is necessary therefor
-    write_counts_to_file(&counts, &config);
+    write_counts_to_file(&counts, &config)
+        .expect(&format!("Failed to write to {}", &config.modelname));
     Ok(())
 }
 
