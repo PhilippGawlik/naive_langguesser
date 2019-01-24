@@ -28,16 +28,15 @@ impl Config {
     }
 }
 
-
 fn get_threegram_iter<'a>(content: &'a str) -> impl Iterator<Item=(char, char, char)>  + 'a {
     let mut iter = content.chars();
     let mut buf_lhs: char = match iter.next() {
         Some(c) => c,
-        None => panic!("Can't generate Twograms for empty content!"),
+        None => panic!("String is too short"),
     };
     let mut buf_mid: char = match iter.next() {
         Some(c) => c,
-        None => panic!("Can't generate Twograms for empty content!"),
+        None => panic!("String is too short"),
     };
     iter.map(
         move |rhs| {
