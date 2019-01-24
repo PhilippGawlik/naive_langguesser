@@ -3,7 +3,6 @@ extern crate clap;
 use std::collections::HashMap;
 use std::error::Error;
 use std::fs;
-//use std::process;
 
 
 pub struct Config {
@@ -79,49 +78,29 @@ mod test {
     use super::*;
 
     #[test]
-    fn test_count_letters_by_adapter() {
-        let content = "aaa".to_string();
-        let mut unigrams = UnigramCounter::new();
-        unigrams.count_unigrams(&content[..]);
-        match unigrams.counts.get(&'a') {
-            Some(count) => assert_eq!(*count, 3),
-            None => panic!("The key 'a' is missing in the HashMap!"),
-        }
-    }
-
-    #[test]
-    fn test_count_letters_by_adapter_unseen() {
-        let content = "aaa".to_string();
-        let mut unigrams = UnigramCounter::new();
-        unigrams.count_unigrams(&content[..]);
-        assert_eq!(unigrams.counts.get(&'b'), None);
-    }
-
-    #[test]
-    fn test_count_letters_by_loop() {
-        let content = "aaa".to_string();
-        let mut unigrams = UnigramCounter::new();
-        unigrams.count_unigrams(&content[..]);
-        match unigrams.counts.get(&'a') {
-            Some(count) => assert_eq!(*count, 3),
-            None => panic!("The key 'a' is missing in the HashMap!"),
-        }
-    }
-
-    #[test]
-    fn test_count_letters_by_loop_unseen() {
-        let content = "aaa".to_string();
-        let mut unigrams = UnigramCounter::new();
-        unigrams.count_unigrams(&content[..]);
-        assert_eq!(unigrams.counts.get(&'b'), None);
+    fn test_get_threegram_iter() {
+        let content = "abcd".to_string();
+        let mut iter = get_threegram_iter(&content);
+        assert_eq!(iter.next(), Some(('a', 'b', 'c')));
+        assert_eq!(iter.next(), Some(('b', 'c', 'd')));
+        assert_eq!(iter.next(), None);
     }
 
     #[test]
     #[should_panic]
-    fn test_division_by_zero() {
-        let nominator: i32 = 1;
-        let denominator: i32 = 0;
-        let unigrams = UnigramCounter::new();
-        unigrams.get_probability(&nominator, &denominator);
+    fn test_to_short_for_threegram() {
+        let content = "a".to_string();
+        let _ = get_threegram_iter(&content);
     }
+
+    //#[test]
+    //fn test_count_letters_by_loop() {
+        //let content = "aaa".to_string();
+        //let mut unigrams = UnigramCounter::new();
+        //unigrams.count_unigrams(&content[..]);
+        //match unigrams.counts.get(&'a') {
+            //Some(count) => assert_eq!(*count, 3),
+            //None => panic!("The key 'a' is missing in the HashMap!"),
+        //}
+    //}
 }
