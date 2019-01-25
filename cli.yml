@@ -23,3 +23,15 @@ subcommands:
                 required: true
                 takes_value: true
                 help: Specifies name for generated model
+    - guess:
+        about: Guess the language of a text
+        version: "0.1"
+        author: Philipp Gawlik <philipp.gawlik@googlemail.com>
+        args:
+            - path:
+                short: p
+                long: path
+                value_name: path
+                required: true
+                takes_value: true
+                help: Specifies the path to a text file holding a language artifact

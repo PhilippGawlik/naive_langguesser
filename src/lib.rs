@@ -4,26 +4,42 @@ use std::collections::HashMap;
 use std::error::Error;
 use std::fs;
 
+pub enum Mode {
+    Model,
+    Guess
+}
 
 pub struct Config {
     filename: String,
-    modelname: String,
+    modelname: Option<String>,
+    pub application_mode: Mode
 }
 
 impl Config {
     pub fn new(matches: &clap::ArgMatches) -> Result<Config, &'static str> {
-        let model_matches = matches.subcommand_matches("model").unwrap();
-        let modelname = format!(
-            "data/models/{}.model",
-            model_matches
-                .value_of("model-name")
+        if let Some(model_matches) = matches.subcommand_matches("model") {
+            let filename = model_matches
+                .value_of("path")
                 .unwrap()  // clap ensures existing value
-                .to_string());
-        let filename = model_matches
-            .value_of("path")
-            .unwrap()  // clap ensures existing value
-            .to_string();
-        Ok(Config{filename, modelname})
+                .to_string();
+            let modelname = Some(format!(
+                "data/models/{}.model",
+                model_matches
+                    .value_of("model-name")
+                    .unwrap()  // clap ensures existing value
+                    .to_string()));
+            let application_mode = Mode::Model;
+            return Ok(Config{filename, modelname, application_mode})
+        } else {
+            let model_matches = matches.subcommand_matches("guess").unwrap();
+            let filename = model_matches
+                .value_of("path")
+                .unwrap()  // clap ensures existing value
+                .to_string();
+            let modelname = None;
+            let application_mode = Mode::Guess;
+            return Ok(Config{filename, modelname, application_mode})
+        };
     }
 }
 
@@ -55,7 +71,11 @@ fn write_probabilities_to_file(counts: &HashMap<(char, char, char), f32>, config
             &format!("{}{}{}\t{}", lhs, mid, rhs, count));
         write_buf.push_str(&String::from("\n"));
     };
-    fs::write(&config.modelname, &write_buf)
+    fs::write(
+        config.modelname
+            .as_ref()  // can't borrow from reference to config
+            .expect("No Modelname was specified"),
+        &write_buf)
 }
 
 fn get_probalities(counts: &HashMap<(char, char, char), i32>, probs: &mut HashMap<(char, char, char), f32>) {
@@ -89,7 +109,12 @@ pub fn model(config: &Config) -> Result<(), Box<dyn Error>> {
     let mut probs: HashMap<(char, char, char), f32> = HashMap::new();
     get_probalities(&counts, &mut probs);
     write_probabilities_to_file(&probs, &config)
-        .expect(&format!("Failed to write to {}", &config.modelname));
+        .expect(&format!("Failed to write to {}", &config.filename));
+    Ok(())
+}
+
+pub fn guess(_config: &Config) -> Result<(), Box<dyn Error>> {
+    println!("I have to guess!");
     Ok(())
 }
 

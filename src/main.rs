@@ -5,6 +5,7 @@ extern crate clap;
 use std::process;
 use clap::App;
 use naive_langguesser::Config;
+use naive_langguesser::Mode;
 
 
 fn main() {
@@ -14,8 +15,18 @@ fn main() {
         println!("Problem parsing arguments: {}", err);
         process::exit(1);
     });
-    if let Err(e) = naive_langguesser::model(&config) {
-        println!("Application error: {}", e);
-        process::exit(1);
+    match config.application_mode {
+        Mode::Model => {
+            if let Err(e) = naive_langguesser::model(&config) {
+                println!("Application error: {}", e);
+                process::exit(1);
+            }
+        },
+        Mode::Guess => {
+            if let Err(e) = naive_langguesser::guess(&config) {
+                println!("Application error: {}", e);
+                process::exit(1);
+            }
+        }
     };
 }
