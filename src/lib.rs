@@ -48,7 +48,7 @@ fn get_threegram_iter<'a>(content: &'a str) -> impl Iterator<Item=(char, char, c
     )
 }
 
-fn write_counts_to_file(counts: &HashMap<(char, char, char), i32>, config: &Config) -> std::io::Result<()> {
+fn write_probabilities_to_file(counts: &HashMap<(char, char, char), f32>, config: &Config) -> std::io::Result<()> {
     let mut write_buf = String::new();
     for ((lhs, mid, rhs), count) in counts {
         write_buf.push_str(
@@ -56,6 +56,22 @@ fn write_counts_to_file(counts: &HashMap<(char, char, char), i32>, config: &Conf
         write_buf.push_str(&String::from("\n"));
     };
     fs::write(&config.modelname, &write_buf)
+}
+
+fn get_probalities(counts: &HashMap<(char, char, char), i32>, probs: &mut HashMap<(char, char, char), f32>) {
+    let normalisation_value: i32 = counts.keys().len() as i32;
+    for (ngram, c) in counts {
+        let prob = probs.entry(*ngram).or_insert(0.0);
+        *prob = get_probability(c, &normalisation_value);
+    }
+}
+
+fn get_probability(nominator: &i32, denominator: &i32) -> f32 {
+    if *denominator > 0 {
+        (*nominator as f32) / (*denominator as f32)
+    } else {
+        panic!("Division by zero!");
+    }
 }
 
 pub fn model(config: &Config) -> Result<(), Box<dyn Error>> {
@@ -68,7 +84,10 @@ pub fn model(config: &Config) -> Result<(), Box<dyn Error>> {
         *count += 1;
         ngram})
         .collect::<Vec<_>>();    // collect ends mutable borrow of 'counts' and is necessary therefor
-    write_counts_to_file(&counts, &config)
+    // calculate probabilities
+    let mut probs: HashMap<(char, char, char), f32> = HashMap::new();
+    get_probalities(&counts, &mut probs);
+    write_probabilities_to_file(&probs, &config)
         .expect(&format!("Failed to write to {}", &config.modelname));
     Ok(())
 }
