@@ -113,6 +113,25 @@ mod test {
         let _ = get_threegram_iter(&content);
     }
 
+
+    #[test]
+    fn test_get_probability() {
+        let nominator: i32 = 2;
+        let denominator: i32 = 2;
+        let correct_result: f32 = 1.0;
+        assert_eq!(
+            get_probability(&nominator, &denominator),
+            correct_result);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_get_probability_division_by_0() {
+        let nominator: i32 = 2;
+        let denominator: i32 = 0;
+        get_probability(&nominator, &denominator);
+    }
+
     //#[test]
     //fn test_count_letters_by_loop() {
         //let content = "aaa".to_string();
