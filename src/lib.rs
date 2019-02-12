@@ -97,7 +97,8 @@ fn get_probability(nominator: &i32, denominator: &i32) -> f32 {
 pub fn model(config: &Config) -> Result<(), Box<dyn Error>> {
     let content = fs::read_to_string(&config.filename)
         .expect(&format!("Failed to read from {}", &config.filename))
-        .replace("\n", "");
+        .replace("\n", "")
+        .replace("\t", "");
     // count threegrams
     let mut counts: HashMap<(char, char, char), i32> = HashMap::new();
     let _ = get_threegram_iter(&content).map(|ngram| {
