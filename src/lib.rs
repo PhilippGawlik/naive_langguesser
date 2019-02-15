@@ -82,11 +82,21 @@ impl LanguageModel {
             )
         )
     }
+
+    fn write_probabilities_to_file(self, path: &str) -> std::io::Result<()> {
+        let mut write_buf = String::new();
+        for ((lhs, mid, rhs), count) in self.model {
+            write_buf.push_str(&format!("{}{}{}\t{}", lhs, mid, rhs, count));
+            write_buf.push_str(&String::from("\n"));
+        };
+        fs::write(path, &write_buf)
+    }
 }
 
 pub struct Config {
     filename: String,
     modelname: Option<String>,
+    outpath: Option<String>,
     pub application_mode: Mode
 }
 
@@ -97,14 +107,16 @@ impl Config {
                 .value_of("path")
                 .unwrap()  // clap ensures existing value
                 .to_string();
-            let modelname = Some(format!(
-                "data/models/{}.model",
-                model_matches
-                    .value_of("model-name")
-                    .unwrap()  // clap ensures existing value
-                    .to_string()));
+            let modelname = Some(model_matches
+                .value_of("model-name")
+                .unwrap()  // clap ensures existing value
+                .to_string());
+            let outpath = Some(format!( "data/models/{}.model", model_matches
+                .value_of("model-name")
+                .unwrap()  // clap ensures existing value
+                .to_string()));
             let application_mode = Mode::Model;
-            return Ok(Config{filename, modelname, application_mode})
+            return Ok(Config{filename, modelname, outpath, application_mode})
         } else {
             let model_matches = matches.subcommand_matches("guess").unwrap();
             let filename = model_matches
@@ -112,8 +124,9 @@ impl Config {
                 .unwrap()  // clap ensures existing value
                 .to_string();
             let modelname = None;
+            let outpath = None;
             let application_mode = Mode::Guess;
-            return Ok(Config{filename, modelname, application_mode})
+            return Ok(Config{filename, modelname, outpath, application_mode})
         };
     }
 }
@@ -137,20 +150,6 @@ fn get_threegram_iter<'a>(content: &'a str) -> impl Iterator<Item=(char, char, c
             (lhs, mid, rhs)
         }
     )
-}
-
-fn write_probabilities_to_file(counts: &HashMap<(char, char, char), f32>, config: &Config) -> std::io::Result<()> {
-    let mut write_buf = String::new();
-    for ((lhs, mid, rhs), count) in counts {
-        write_buf.push_str(
-            &format!("{}{}{}\t{}", lhs, mid, rhs, count));
-        write_buf.push_str(&String::from("\n"));
-    };
-    fs::write(
-        config.modelname
-            .as_ref()  // can't borrow from reference to config
-            .expect("No Modelname was specified"),
-        &write_buf)
 }
 
 fn get_probalities(counts: &HashMap<(char, char, char), i32>, probs: &mut HashMap<(char, char, char), f32>) {
@@ -182,10 +181,21 @@ pub fn model(config: &Config) -> Result<(), Box<dyn Error>> {
         ngram})
         .collect::<Vec<_>>();    // collect ends mutable borrow of 'counts' and is necessary therefor
     // calculate probabilities
-    let mut probs: HashMap<(char, char, char), f32> = HashMap::new();
-    get_probalities(&counts, &mut probs);
-    write_probabilities_to_file(&probs, &config)
-        .expect(&format!("Failed to write to {}", &config.filename));
+    let mut model = LanguageModel::new(
+        &config
+            .modelname
+            .as_ref()
+            .expect("Modelname")
+            ).unwrap();
+    get_probalities(&counts, &mut model.model);
+    model.write_probabilities_to_file(&config.outpath.as_ref().unwrap()[..])
+        .expect(
+            &format!(
+                "Failed to write to {}",
+                &config
+                .outpath
+                .as_ref()
+                .expect("Outpath")));
     Ok(())
 }
 
