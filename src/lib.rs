@@ -1,12 +1,87 @@
 extern crate clap;
+#[macro_use] extern crate lazy_static;  //compile regex only once in loops
+extern crate regex;
 
 use std::collections::HashMap;
 use std::error::Error;
 use std::fs;
+use std::io;
+use std::path::Path;
+use std::io::prelude::*;
+use regex::Regex;
+
 
 pub enum Mode {
     Model,
     Guess
+}
+
+pub struct LanguageModel {
+    name: String,
+    model: HashMap<(char, char, char), f32>
+}
+
+impl LanguageModel {
+    pub fn new(n: &str) -> Result<LanguageModel, &'static str> {
+        let name: String = String::from(n);
+        let model: HashMap<(char, char, char), f32> = HashMap::new();
+        return Ok(LanguageModel{name, model})
+    }
+
+    pub fn from_file(path: &str) -> Result<LanguageModel, &'static str> {
+        // parse name
+        let name = LanguageModel::parse_name_from_path(path).unwrap();
+        // init new model
+        let mut language_model = LanguageModel::new(&name[..]).unwrap();
+        // parse model from file line by line
+        let f = fs::File::open(path).expect("Can't open model file");
+        let reader = io::BufReader::new(f);
+        for line in reader.lines() {
+            let mut split =
+                line          // looks like: abc\t0.123
+                .as_ref()     // 'line' needs to outlive 'split'
+                .unwrap()
+                .split("\t");  // split into: [abc, 0.123] 
+            // get ngram as string
+            let ngram_str = String::from(
+                split
+                .next()
+                .unwrap()
+            );
+            // get char iterator of ngrams
+            let mut iter = ngram_str.chars();
+            // get ngram tuple
+            let ngram_tup = (
+                iter.next().unwrap(),
+                iter.next().unwrap(),
+                iter.next().unwrap());
+            // get probability
+            let prob = language_model.model.entry(ngram_tup).or_insert(0.0);
+            *prob = split
+                .next()
+                .unwrap()
+                .parse()
+                .unwrap();
+        };
+        Ok(language_model)
+    }
+
+    pub fn parse_name_from_path(path: &str) -> Result<String, &'static str> {
+        // only build regex once
+        lazy_static! {
+            static ref get_name: Regex = Regex::new(r"\./data/models/([a-zA-Z0-9]+)\.model")
+                .unwrap();
+        };
+        Ok(
+            String::from(
+                &get_name
+                .captures_iter(path)
+                .next()
+                .expect("Can't parse model name from path")
+                [1]
+            )
+        )
+    }
 }
 
 pub struct Config {
@@ -114,7 +189,52 @@ pub fn model(config: &Config) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+fn get_model_paths(dir: &Path, model_paths: &mut Vec<String>) -> io::Result<()> {
+    if dir.is_dir() {
+        for entry in fs::read_dir(dir)? {
+            let path = entry.unwrap().path();
+            if path.is_dir() {
+                // just check the paths on current folder level
+                continue;
+            } else {
+                let path_str = String::from(path.to_str().unwrap());
+                // only build regex once
+                lazy_static! {
+                        static ref is_model: Regex = Regex::new(r".*\.model").unwrap();
+                    }
+                if is_model.is_match(&path_str[..]) {
+                    model_paths.push(String::from(path.to_str().unwrap()));
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
+fn read_models_from_file(model_paths: &Vec<String>, models: &mut Vec<LanguageModel>) -> Result<(), Box<dyn Error>> {
+    for path in model_paths {
+        models
+            .push(LanguageModel::from_file(path)
+            .unwrap());
+    };
+    Ok(())
+}
+
 pub fn guess(_config: &Config) -> Result<(), Box<dyn Error>> {
+    let path =  Path::new("./data/models/");
+    let mut models: Vec<LanguageModel> = Vec::new();
+    let mut model_paths = Vec::new();
+    let _ret = match get_model_paths(&path, &mut model_paths) {
+        Ok(v) => v,
+        Err(e) => panic!("Unrecoverable error while reading model files: {}", e)
+    };
+    match read_models_from_file(&model_paths, &mut models) {
+        Ok(models) => models,
+        Err(_) => panic!("Todo")
+    };
+    for model in models {
+        println!("Model name: {:?}", model.name);
+    };
     println!("I have to guess!");
     Ok(())
 }
