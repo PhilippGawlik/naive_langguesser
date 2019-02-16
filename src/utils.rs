@@ -5,6 +5,9 @@ use std::io;
 use regex::Regex;
 use std::error::Error;
 
+use models;
+
+
 pub fn get_probability(nominator: &i32, denominator: &i32) -> f32 {
     if *denominator > 0 {
         (*nominator as f32) / (*denominator as f32)
@@ -67,7 +70,7 @@ pub fn get_threegram_iter<'a>(content: &'a str) -> impl Iterator<Item=(char, cha
 pub fn read_models_from_file(model_paths: &Vec<String>, models: &mut Vec<crate::models::LanguageModel>) -> Result<(), Box<dyn Error>> {
     for path in model_paths {
         models
-            .push(crate::models::LanguageModel::from_file(path)
+            .push(models::LanguageModel::from_file(path)
             .unwrap());
     };
     Ok(())

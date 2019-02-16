@@ -6,32 +6,40 @@ use std::error::Error;
 use std::collections::HashMap;
 use std::path::Path;
 use std::fs;
+use models::LanguageModel;
+use utils::{
+    get_threegram_iter,
+    get_probalities,
+    get_model_paths,
+    read_models_from_file
+};
 
+// these mod statements are just for the compiler to include the modules
 mod utils;
 mod models;
-// public to allow main.rs to use config
+// public so main.rs can use the config
 pub mod config;
 
-pub fn model(config: &crate::config::Config) -> Result<(), Box<dyn Error>> {
     let content = fs::read_to_string(&config.filename)
         .expect(&format!("Failed to read from {}", &config.filename))
+pub fn model(config: &config::Config) -> Result<(), Box<dyn Error>> {
         .replace("\n", "")
         .replace("\t", "");
     // count threegrams
     let mut counts: HashMap<(char, char, char), i32> = HashMap::new();
-    let _ = utils::get_threegram_iter(&content).map(|ngram| {
         let count = counts.entry(ngram).or_insert(0);
         *count += 1;
         ngram})
+    let _ = get_threegram_iter(&content)
         .collect::<Vec<_>>();    // collect ends mutable borrow of 'counts' and is necessary therefor
     // calculate probabilities
-    let mut model = crate::models::LanguageModel::new(
+    let mut model = LanguageModel::new(
         &config
             .modelname
             .as_ref()
             .expect("Modelname")
             ).unwrap();
-    utils::get_probalities(&counts, &mut model.model);
+    get_probalities(&counts, &mut model.model);
     model.write_probabilities_to_file(&config.outpath.as_ref().unwrap()[..])
         .expect(
             &format!(
@@ -43,15 +51,15 @@ pub fn model(config: &crate::config::Config) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-pub fn guess(_config: &crate::config::Config) -> Result<(), Box<dyn Error>> {
+pub fn guess(_config: &config::Config) -> Result<(), Box<dyn Error>> {
     let path =  Path::new("./data/models/");
-    let mut models: Vec<crate::models::LanguageModel> = Vec::new();
+    let mut models: Vec<LanguageModel> = Vec::new();
     let mut model_paths = Vec::new();
-    let _ret = match utils::get_model_paths(&path, &mut model_paths) {
+    let _ret = match get_model_paths(&path, &mut model_paths) {
         Ok(v) => v,
         Err(e) => panic!("Unrecoverable error while reading model files: {}", e)
     };
-    match utils::read_models_from_file(&model_paths, &mut models) {
+    match read_models_from_file(&model_paths, &mut models) {
         Ok(models) => models,
         Err(_) => panic!("Todo")
     };
