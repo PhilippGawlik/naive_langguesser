@@ -4,8 +4,8 @@ extern crate clap;
 
 use std::process;
 use clap::App;
-use naive_langguesser::Config;
-use naive_langguesser::Mode;
+use naive_langguesser::config::Config;
+use naive_langguesser::config::Mode;
 
 
 fn main() {
