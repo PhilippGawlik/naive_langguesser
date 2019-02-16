@@ -11,22 +11,29 @@ use naive_langguesser::config::Mode;
 fn main() {
     let yaml = load_yaml!("../cli.yml");
     let matches = App::from_yaml(yaml).get_matches();
-    let config = Config::new(&matches).unwrap_or_else(|err| {
-        println!("Problem parsing arguments: {}", err);
-        process::exit(1);
-    });
+    let config = Config::new(&matches);
     match config.application_mode {
         Mode::Model => {
-            if let Err(e) = naive_langguesser::model(&config) {
-                println!("Application error: {}", e);
-                process::exit(1);
-            }
+            process::exit(
+                match naive_langguesser::model(&config) {
+                    Ok(_) => 0,
+                    Err(err) => {
+                        eprintln!("Application error: {:?}", err);
+                        1
+                    }
+                }
+            )
         },
         Mode::Guess => {
-            if let Err(e) = naive_langguesser::guess(&config) {
-                println!("Application error: {}", e);
-                process::exit(1);
-            }
+            process::exit(
+                match naive_langguesser::guess(&config) {
+                    Ok(_) => 0,
+                    Err(err) => {
+                        eprintln!("Application error: {:?}", err);
+                        1
+                    }
+                }
+            )
         }
     };
 }

@@ -11,7 +11,7 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn new(matches: &clap::ArgMatches) -> Result<Config, &'static str> {
+    pub fn new(matches: &clap::ArgMatches) -> Config {
         if let Some(model_matches) = matches.subcommand_matches("model") {
             let filename = model_matches
                 .value_of("path")
@@ -21,12 +21,12 @@ impl Config {
                 .value_of("model-name")
                 .unwrap()  // clap ensures existing value
                 .to_string());
-            let outpath = Some(format!( "data/models/{}.model", model_matches
+            let outpath = Some(format!("data/models/{}.model", model_matches
                 .value_of("model-name")
                 .unwrap()  // clap ensures existing value
                 .to_string()));
             let application_mode = Mode::Model;
-            return Ok(Config{filename, modelname, outpath, application_mode})
+            return Config{filename, modelname, outpath, application_mode}
         } else {
             let model_matches = matches.subcommand_matches("guess").unwrap();
             let filename = model_matches
@@ -36,7 +36,7 @@ impl Config {
             let modelname = None;
             let outpath = None;
             let application_mode = Mode::Guess;
-            return Ok(Config{filename, modelname, outpath, application_mode})
+            return Config{filename, modelname, outpath, application_mode}
         };
     }
 }

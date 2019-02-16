@@ -5,6 +5,7 @@ use std::io;
 use std::io::prelude::*;
 use regex::Regex;
 
+
 pub struct LanguageModel {
     pub name: String,
     pub model: HashMap<(char, char, char), f32>
@@ -78,6 +79,7 @@ impl LanguageModel {
             write_buf.push_str(&format!("{}{}{}\t{}", lhs, mid, rhs, count));
             write_buf.push_str(&String::from("\n"));
         };
-        fs::write(path, &write_buf)
+        fs::write(path, &write_buf)?;
+        Ok(())
     }
 }

@@ -8,6 +8,27 @@ use std::error::Error;
 use models::LanguageModel;
 
 
+pub fn get_threegram_iter<'a>(content: &'a str) -> impl Iterator<Item=(char, char, char)> + 'a {
+    let mut iter = content.chars();
+    let mut buf_lhs: char = match iter.next() {
+        Some(c) => c,
+        None => panic!("Language example is too short"),
+    };
+    let mut buf_mid: char = match iter.next() {
+        Some(c) => c,
+        None => panic!("Language example is too short"),
+    };
+    iter.map(
+        move |rhs| {
+        let lhs = buf_lhs;
+        let mid = buf_mid;
+        buf_lhs = buf_mid;
+        buf_mid = rhs;
+        (lhs, mid, rhs)
+        }
+    )
+}
+
 pub fn get_probability(nominator: &i32, denominator: &i32) -> f32 {
     if *denominator > 0 {
         (*nominator as f32) / (*denominator as f32)
@@ -44,27 +65,6 @@ pub fn get_model_paths(dir: &Path, model_paths: &mut Vec<String>) -> io::Result<
         }
     }
     Ok(())
-}
-
-pub fn get_threegram_iter<'a>(content: &'a str) -> impl Iterator<Item=(char, char, char)> + 'a {
-    let mut iter = content.chars();
-    let mut buf_lhs: char = match iter.next() {
-        Some(c) => c,
-        None => panic!("String is too short"),
-    };
-    let mut buf_mid: char = match iter.next() {
-        Some(c) => c,
-        None => panic!("String is too short"),
-    };
-    iter.map(
-        move |rhs| {
-        let lhs = buf_lhs;
-        let mid = buf_mid;
-        buf_lhs = buf_mid;
-        buf_mid = rhs;
-        (lhs, mid, rhs)
-        }
-    )
 }
 
 pub fn read_models_from_file(model_paths: &Vec<String>, models: &mut Vec<LanguageModel>) -> Result<(), Box<dyn Error>> {

@@ -20,17 +20,19 @@ mod models;
 // public so main.rs can use the config
 pub mod config;
 
-    let content = fs::read_to_string(&config.filename)
-        .expect(&format!("Failed to read from {}", &config.filename))
+
 pub fn model(config: &config::Config) -> Result<(), Box<dyn Error>> {
+    // get language example
+    let content = fs::read_to_string(&config.filename)?
         .replace("\n", "")
         .replace("\t", "");
     // count threegrams
     let mut counts: HashMap<(char, char, char), i32> = HashMap::new();
-        let count = counts.entry(ngram).or_insert(0);
-        *count += 1;
-        ngram})
     let _ = get_threegram_iter(&content)
+        .map(|ngram| {
+            let count = counts.entry(ngram).or_insert(0);
+            *count += 1;
+            ngram})
         .collect::<Vec<_>>();    // collect ends mutable borrow of 'counts' and is necessary therefor
     // calculate probabilities
     let mut model = LanguageModel::new(
