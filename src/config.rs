@@ -11,7 +11,7 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn new(matches: &clap::ArgMatches) -> Config {
+    pub fn new(matches: clap::ArgMatches) -> Config {
         if let Some(model_matches) = matches.subcommand_matches("model") {
             let filename = model_matches
                 .value_of("path")

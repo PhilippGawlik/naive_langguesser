@@ -1,7 +1,7 @@
 use std::collections::HashMap;
+//use itertools::Itertools;
 use std::path::Path;
 use std::fs;
-use std::io;
 use regex::Regex;
 use std::error::Error;
 
@@ -9,15 +9,14 @@ use models::LanguageModel;
 
 
 pub fn get_threegram_iter<'a>(content: &'a str) -> impl Iterator<Item=(char, char, char)> + 'a {
+    if content.chars().count() < 3 {
+        panic!("Language text example is too short. Minimum is 3 letters.");
+    };
     let mut iter = content.chars();
-    let mut buf_lhs: char = match iter.next() {
-        Some(c) => c,
-        None => panic!("Language example is too short"),
-    };
-    let mut buf_mid: char = match iter.next() {
-        Some(c) => c,
-        None => panic!("Language example is too short"),
-    };
+    // with the deep-copy (char type) ownership is taken
+    let mut buf_lhs: char = iter.next().unwrap();
+    let mut buf_mid: char = iter.next().unwrap();
+    // need the move keyword to also take ownership of rhs
     iter.map(
         move |rhs| {
         let lhs = buf_lhs;
@@ -29,23 +28,27 @@ pub fn get_threegram_iter<'a>(content: &'a str) -> impl Iterator<Item=(char, cha
     )
 }
 
-pub fn get_probability(nominator: &i32, denominator: &i32) -> f32 {
+pub fn get_probability(nominator: &i32, denominator: &i32) -> Result<f32, Box<dyn Error>> {
     if *denominator > 0 {
-        (*nominator as f32) / (*denominator as f32)
+        Ok((*nominator as f32) / (*denominator as f32))
     } else {
         panic!("Division by zero!");
     }
 }
 
-pub fn get_probalities(counts: &HashMap<(char, char, char), i32>, probs: &mut HashMap<(char, char, char), f32>) {
+pub fn get_probalities(counts: &HashMap<(char, char, char), i32>) -> Result<HashMap<(char, char, char), f32>, Box<dyn Error>> {
     let normalisation_value: i32 = counts.keys().len() as i32;
-    for (ngram, c) in counts {
-        let prob = probs.entry(*ngram).or_insert(0.0);
-        *prob = get_probability(c, &normalisation_value);
-    }
+    let probs: HashMap<(char, char, char), f32> = counts
+        .iter()
+        .map(|(ngram, c)| {
+            (ngram.clone(), get_probability(c, &normalisation_value).unwrap())
+        })
+        .collect();
+    Ok(probs)
 }
 
-pub fn get_model_paths(dir: &Path, model_paths: &mut Vec<String>) -> io::Result<()> {
+pub fn get_model_paths(dir: &Path) -> Result<Vec<String>, Box<dyn Error>> {
+    let mut model_paths = Vec::new();
     if dir.is_dir() {
         for entry in fs::read_dir(dir)? {
             let path = entry.unwrap().path();
@@ -63,17 +66,18 @@ pub fn get_model_paths(dir: &Path, model_paths: &mut Vec<String>) -> io::Result<
                 }
             }
         }
-    }
-    Ok(())
+    };
+    Ok(model_paths)
 }
 
-pub fn read_models_from_file(model_paths: &Vec<String>, models: &mut Vec<LanguageModel>) -> Result<(), Box<dyn Error>> {
+pub fn read_models_from_file(model_paths: &Vec<String>) -> Result<Vec<LanguageModel>, Box<dyn Error>> {
+    let mut models: Vec<LanguageModel> = Vec::new();
     for path in model_paths {
         models
             .push(LanguageModel::from_file(path)
             .unwrap());
     };
-    Ok(())
+    Ok(models)
 }
 
 #[cfg(test)]

@@ -4,6 +4,10 @@ use std::io;
 // necesary import for .lines() method of BufReader
 use std::io::prelude::*;
 use regex::Regex;
+use utils::{
+    get_threegram_iter,
+    get_probalities
+};
 
 
 pub struct LanguageModel {
@@ -11,8 +15,23 @@ pub struct LanguageModel {
     pub model: HashMap<(char, char, char), f32>
 }
 
+
 impl LanguageModel {
-    pub fn new(n: &str) -> Result<LanguageModel, &'static str> {
+    pub fn from_str(n: &str, content: &str) -> Result<LanguageModel, &'static str> {
+        let mut counts: HashMap<(char, char, char), i32> = HashMap::new();
+        let _ = get_threegram_iter(&content)
+            .map(|ngram| {
+                let count = counts.entry(ngram).or_insert(0);
+                *count += 1;
+                ngram})
+            .collect::<Vec<_>>();    // collect ends mutable borrow of 'counts' and is necessary therefor
+        Ok(LanguageModel{
+            name: n.to_string(),
+            model: get_probalities(&counts).expect("Some error while calculating the model.")
+        })
+    } 
+
+    pub fn from_name(n: &str) -> Result<LanguageModel, &'static str> {
         let name: String = String::from(n);
         let model: HashMap<(char, char, char), f32> = HashMap::new();
         return Ok(LanguageModel{name, model})
@@ -22,7 +41,7 @@ impl LanguageModel {
         // parse name
         let name = LanguageModel::parse_name_from_path(path).unwrap();
         // init new model
-        let mut language_model = LanguageModel::new(&name[..]).unwrap();
+        let mut language_model = LanguageModel::from_name(&name[..]).unwrap();
         // parse model from file line by line
         let f = fs::File::open(path).expect("Can't open model file");
         let reader = io::BufReader::new(f);

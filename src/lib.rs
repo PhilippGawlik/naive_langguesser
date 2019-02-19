@@ -1,15 +1,12 @@
 extern crate clap;
 #[macro_use] extern crate lazy_static;  //compile regex only once in loops
 extern crate regex;
-
+extern crate itertools;
 use std::error::Error;
-use std::collections::HashMap;
 use std::path::Path;
 use std::fs;
 use models::LanguageModel;
 use utils::{
-    get_threegram_iter,
-    get_probalities,
     get_model_paths,
     read_models_from_file
 };
@@ -21,47 +18,41 @@ mod models;
 pub mod config;
 
 
-pub fn model(config: &config::Config) -> Result<(), Box<dyn Error>> {
+pub fn model(config: config::Config) -> Result<(), Box<dyn Error>> {
     // get language example
     let content = fs::read_to_string(&config.filename)?
         .replace("\n", "")
         .replace("\t", "");
-    // count threegrams
-    let mut counts: HashMap<(char, char, char), i32> = HashMap::new();
-    let _ = get_threegram_iter(&content)
-        .map(|ngram| {
-            let count = counts.entry(ngram).or_insert(0);
-            *count += 1;
-            ngram})
-        .collect::<Vec<_>>();    // collect ends mutable borrow of 'counts' and is necessary therefor
-    // calculate probabilities
-    let mut model = LanguageModel::new(
-        &config
+    // build language model
+    let language_model = LanguageModel::from_str(
+        config
             .modelname
             .as_ref()
-            .expect("Modelname")
-            ).unwrap();
-    get_probalities(&counts, &mut model.model);
-    model.write_probabilities_to_file(&config.outpath.as_ref().unwrap()[..])
+            .expect("Modelname"),
+        &content[..]
+    ).expect("Error while initializing language model");
+    // write language model
+    language_model.write_probabilities_to_file(
+        &config.outpath.as_ref().unwrap()[..])
         .expect(
             &format!(
                 "Failed to write to {}",
                 &config
-                .outpath
-                .as_ref()
-                .expect("Outpath")));
+                    .outpath
+                    .as_ref()
+                    .expect("Outpath")
+            )
+        );
     Ok(())
 }
 
-pub fn guess(_config: &config::Config) -> Result<(), Box<dyn Error>> {
+pub fn guess(_config: config::Config) -> Result<(), Box<dyn Error>> {
     let path =  Path::new("./data/models/");
-    let mut models: Vec<LanguageModel> = Vec::new();
-    let mut model_paths = Vec::new();
-    let _ret = match get_model_paths(&path, &mut model_paths) {
-        Ok(v) => v,
+    let model_paths = match get_model_paths(&path) {
+        Ok(paths) => paths,
         Err(e) => panic!("Unrecoverable error while reading model files: {}", e)
     };
-    match read_models_from_file(&model_paths, &mut models) {
+    let models = match read_models_from_file(&model_paths) {
         Ok(models) => models,
         Err(_) => panic!("Todo")
     };
