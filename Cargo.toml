@@ -7,3 +7,4 @@ authors = ["Philipp Gawlik <philipp.gawlik@googlemail.com>"]
 clap = {version = "2.32", features = ["yaml"]}
 regex = "1"
 lazy_static = "1.2.0"
+itertools = "0.8.0"
