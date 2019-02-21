@@ -31,11 +31,11 @@ impl LanguageModel {
         })
     } 
 
-    pub fn get_ngram_probability(&self, key: &(char, char, char)) -> Result<f32, &'static str> {
+    pub fn get_ngram_probability(&self, key: &(char, char, char), default : f32) -> Result<f32, &'static str> {
         if self.model.contains_key(key) {
             return Ok(self.model[key]);
         } else {
-            return Ok(0.0);
+            return Ok(default);
         }
     }
 
