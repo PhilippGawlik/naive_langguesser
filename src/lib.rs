@@ -8,7 +8,8 @@ use std::fs;
 use models::LanguageModel;
 use utils::{
     get_model_paths,
-    read_models_from_file
+    read_models_from_file,
+    get_threegram_iter
 };
 
 // these mod statements are just for the compiler to include the modules
@@ -46,7 +47,7 @@ pub fn model(config: config::Config) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-pub fn guess(_config: config::Config) -> Result<(), Box<dyn Error>> {
+pub fn guess(config: config::Config) -> Result<(), Box<dyn Error>> {
     let path =  Path::new("./data/models/");
     let model_paths = match get_model_paths(&path) {
         Ok(paths) => paths,
@@ -56,9 +57,23 @@ pub fn guess(_config: config::Config) -> Result<(), Box<dyn Error>> {
         Ok(models) => models,
         Err(_) => panic!("Todo")
     };
-    for model in models {
-        println!("Model name: {:?}", model.name);
-    };
+    // get language example
+    let content = fs::read_to_string(&config.filename)?
+        .replace("\n", "")
+        .replace("\t", "");
+    let mut product1: f32 = 1.0;
+    let mut product2: f32 = 1.0;
+    let mut product3: f32 = 1.0;
+    let _ = get_threegram_iter(&content)
+        .map(|ngram| {
+            product1 += models[0].get_ngram_probability(&ngram).unwrap();
+            product2 += models[1].get_ngram_probability(&ngram).unwrap();
+            product3 += models[2].get_ngram_probability(&ngram).unwrap();
+            ngram})
+        .collect::<Vec<_>>();    // collect ends mutable borrow of 'counts' and is necessary therefor
     println!("I have to guess!");
+    println!("Model {} with : {}", models[0].name, product1);
+    println!("Model {} with : {}", models[1].name, product2);
+    println!("Model {} with : {}", models[2].name, product3);
     Ok(())
 }
