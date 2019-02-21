@@ -61,14 +61,23 @@ pub fn guess(config: config::Config) -> Result<(), Box<dyn Error>> {
     let content = fs::read_to_string(&config.filename)?
         .replace("\n", "")
         .replace("\t", "");
-    let mut product1: f32 = 0.0;
-    let mut product2: f32 = 0.0;
-    let mut product3: f32 = 0.0;
+    let mut product1: f32 = 1.0;
+    let mut product2: f32 = 1.0;
+    let mut product3: f32 = 1.0;
     let _ = get_threegram_iter(&content)
         .map(|ngram| {
-            product1 += models[0].get_ngram_probability(&ngram, 0.0).unwrap();
-            product2 += models[1].get_ngram_probability(&ngram, 0.0).unwrap();
-            product3 += models[2].get_ngram_probability(&ngram, 0.0).unwrap();
+            product1 += models[0]
+                .get_ngram_probability(&ngram, 1.0)
+                .unwrap()
+                .log2();
+            product2 += models[1]
+                .get_ngram_probability(&ngram, 1.0)
+                .unwrap()
+                .log2();
+            product3 += models[2]
+                .get_ngram_probability(&ngram, 1.0)
+                .unwrap()
+                .log2();
             ngram})
         .collect::<Vec<_>>();    // collect ends mutable borrow of 'counts' and is necessary therefor
     println!("I have to guess!");
