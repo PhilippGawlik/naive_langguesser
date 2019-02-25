@@ -4,10 +4,15 @@ use std::io;
 // necesary import for .lines() method of BufReader
 use std::io::prelude::*;
 use regex::Regex;
+use std::path::Path;
 use utils::{
     get_threegram_iter,
-    get_probalities
+    get_probalities,
+    get_model_paths
 };
+use std::thread;
+use std::sync::mpsc::{channel, Sender, Receiver};
+//use std::time::Duration;
 
 
 pub struct LanguageModel {
@@ -31,7 +36,18 @@ impl LanguageModel {
         })
     } 
 
-    pub fn get_ngram_probability(&self, key: &(char, char, char), default : f32) -> Result<f32, &'static str> {
+    pub fn calculate_str_probability(self, unclassified: &str) -> Result<f32, &'static str> {
+        let mut product: f32 = 0.0;
+        for ngram in get_threegram_iter(unclassified) {
+            product += self.get_ngram_probability(&ngram, 1.0)
+                .unwrap()
+                .log2()
+                .abs();
+        }
+        Ok(product)
+    }
+
+    fn get_ngram_probability(&self, key: &(char, char, char), default : f32) -> Result<f32, &'static str> {
         if self.model.contains_key(key) {
             return Ok(self.model[key]);
         } else {
@@ -110,3 +126,61 @@ impl LanguageModel {
         Ok(())
     }
 }
+
+
+pub struct Inferer {
+    pub language_models: Vec<LanguageModel>
+}
+
+impl Inferer {
+    pub fn from_models_path(path: &Path) -> Result<Inferer, &'static str> {
+        let model_paths = match get_model_paths(&path) {
+            Ok(paths) => paths,
+            Err(e) => panic!("Unrecoverable error while reading model files: {}", e)
+        };
+        Inferer::from_model_files(model_paths)
+    }
+
+    pub fn from_model_files(model_paths: Vec<String>) -> Result<Inferer, &'static str> {
+        let mut language_models: Vec<LanguageModel> = Vec::new();
+        let (tx, rx): (Sender<LanguageModel>, Receiver<LanguageModel>) = channel();
+        let _ = model_paths
+            .into_iter()
+            .map(|path| {
+                let tx_ = tx.clone();  
+                thread::spawn(move || { // 'move' to copy path to prevent the closure to outlive path
+                    let model = LanguageModel::from_file(&path[..]).unwrap();
+                    tx_.send(model).unwrap();
+                    drop(tx_);
+                });
+            }).collect::<Vec<_>>();    // collect ends mutable borrow of 'counts' and is necessary therefor
+        drop(tx);
+        while let Ok(model) = rx.recv() {
+            language_models.push(model);
+        };
+        Ok(Inferer{language_models})
+    }
+
+    pub fn infer(self, unclassified: String) -> Result<Vec<(String, f32)>, &'static str> {
+        let mut prob_table: Vec<(String, f32)> = Vec::new();
+        let (out_sender, out_receiver): (Sender<(String, f32)>, Receiver<(String, f32)>) = channel();
+        for model in self.language_models {
+            let out_sender_instance = out_sender.clone();
+            let abc = unclassified.clone();
+            thread::spawn(move || {
+                let tuple = (
+                    model.name.clone(),
+                    model.calculate_str_probability(&abc[..]).unwrap()
+                );
+                out_sender_instance.send(tuple).unwrap();
+                drop(out_sender_instance);
+            });
+        };
+        drop(out_sender);
+        while let Ok(guess) = out_receiver.recv() {
+            prob_table.push(guess);
+        };
+        Ok(prob_table)
+    }
+}
+

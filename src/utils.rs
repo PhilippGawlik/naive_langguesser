@@ -5,8 +5,6 @@ use std::fs;
 use regex::Regex;
 use std::error::Error;
 
-use models::LanguageModel;
-
 
 pub fn get_threegram_iter<'a>(content: &'a str) -> impl Iterator<Item=(char, char, char)> + 'a {
     if content.chars().count() < 3 {
@@ -28,6 +26,7 @@ pub fn get_threegram_iter<'a>(content: &'a str) -> impl Iterator<Item=(char, cha
     )
 }
 
+
 pub fn get_probability(nominator: &i32, denominator: &i32) -> Result<f32, Box<dyn Error>> {
     if *denominator > 0 {
         Ok((*nominator as f32) / (*denominator as f32))
@@ -35,6 +34,7 @@ pub fn get_probability(nominator: &i32, denominator: &i32) -> Result<f32, Box<dy
         panic!("Division by zero!");
     }
 }
+
 
 pub fn get_probalities(counts: &HashMap<(char, char, char), i32>) -> Result<HashMap<(char, char, char), f32>, Box<dyn Error>> {
     let normalisation_value: i32 = counts.keys().len() as i32;
@@ -46,6 +46,7 @@ pub fn get_probalities(counts: &HashMap<(char, char, char), i32>) -> Result<Hash
         .collect();
     Ok(probs)
 }
+
 
 pub fn get_model_paths(dir: &Path) -> Result<Vec<String>, Box<dyn Error>> {
     let mut model_paths = Vec::new();
@@ -70,15 +71,19 @@ pub fn get_model_paths(dir: &Path) -> Result<Vec<String>, Box<dyn Error>> {
     Ok(model_paths)
 }
 
-pub fn read_models_from_file(model_paths: &Vec<String>) -> Result<Vec<LanguageModel>, Box<dyn Error>> {
-    let mut models: Vec<LanguageModel> = Vec::new();
-    for path in model_paths {
-        models
-            .push(LanguageModel::from_file(path)
-            .unwrap());
-    };
-    Ok(models)
+
+pub fn sort_by_probability(mut vec: Vec<(String, f32)>) -> Result<Vec<(String, f32)>, Box<dyn Error>> {
+    vec
+        .sort_by(|elem1, elem2| {
+            elem1
+            .1
+            .partial_cmp(&elem2.1)
+            .unwrap()
+        }
+        .reverse());
+    Ok(vec)
 }
+
 
 #[cfg(test)]
 mod test {
