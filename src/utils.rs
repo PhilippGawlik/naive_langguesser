@@ -27,7 +27,7 @@ pub fn get_threegram_iter<'a>(content: &'a str) -> impl Iterator<Item=(char, cha
 }
 
 
-pub fn get_probability(nominator: &i32, denominator: &i32) -> Result<f32, Box<dyn Error>> {
+pub fn get_probability(nominator: &i32, denominator: &i32) -> Result<f32, Box<Error>> {
     if *denominator > 0 {
         Ok((*nominator as f32) / (*denominator as f32))
     } else {
@@ -36,7 +36,7 @@ pub fn get_probability(nominator: &i32, denominator: &i32) -> Result<f32, Box<dy
 }
 
 
-pub fn get_probalities(counts: &HashMap<(char, char, char), i32>) -> Result<HashMap<(char, char, char), f32>, Box<dyn Error>> {
+pub fn get_probalities(counts: &HashMap<(char, char, char), i32>) -> Result<HashMap<(char, char, char), f32>, Box<Error>> {
     let normalisation_value: i32 = counts.keys().len() as i32;
     let probs: HashMap<(char, char, char), f32> = counts
         .iter()
@@ -48,7 +48,7 @@ pub fn get_probalities(counts: &HashMap<(char, char, char), i32>) -> Result<Hash
 }
 
 
-pub fn get_model_paths(dir: &Path) -> Result<Vec<String>, Box<dyn Error>> {
+pub fn get_model_paths(dir: &Path) -> Result<Vec<String>, Box<Error>> {
     let mut model_paths = Vec::new();
     if dir.is_dir() {
         for entry in fs::read_dir(dir)? {
@@ -72,7 +72,7 @@ pub fn get_model_paths(dir: &Path) -> Result<Vec<String>, Box<dyn Error>> {
 }
 
 
-pub fn sort_by_probability(mut vec: Vec<(String, f32)>) -> Result<Vec<(String, f32)>, Box<dyn Error>> {
+pub fn sort_by_probability(mut vec: Vec<(String, f32)>) -> Result<Vec<(String, f32)>, Box<Error>> {
     vec
         .sort_by(|elem1, elem2| {
             elem1

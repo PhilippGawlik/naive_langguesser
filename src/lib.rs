@@ -17,7 +17,7 @@ mod models;
 pub mod config;
 
 
-pub fn model(config: config::Config) -> Result<(), Box<dyn Error>> {
+pub fn model(config: config::Config) -> Result<(), Box<Error>> {
     // get language example
     let content = fs::read_to_string(&config.filename)?
         .replace("\n", "")
@@ -46,7 +46,7 @@ pub fn model(config: config::Config) -> Result<(), Box<dyn Error>> {
 }
 
 
-pub fn guess(config: config::Config) -> Result<(), Box<dyn Error>> {
+pub fn guess(config: config::Config) -> Result<(), Box<Error>> {
     // get language example
     let unclassified = fs::read_to_string(&config.filename)?
         .replace("\n", "")
