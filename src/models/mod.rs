@@ -12,8 +12,11 @@ use utils::{
 };
 use std::thread;
 use std::sync::mpsc::{channel, Sender, Receiver};
+use models::errors::LanguageModelError;
+use models::errors::InfererError;
 //use std::time::Duration;
 
+pub mod errors;
 
 pub struct LanguageModel {
     pub name: String,
@@ -22,7 +25,7 @@ pub struct LanguageModel {
 
 
 impl LanguageModel {
-    pub fn from_str(n: &str, content: &str) -> Result<LanguageModel, &'static str> {
+    pub fn from_str(n: &str, content: &str) -> Result<LanguageModel, LanguageModelError> {
         let mut counts: HashMap<(char, char, char), i32> = HashMap::new();
         let _ = get_threegram_iter(&content)
             .map(|ngram| {
@@ -32,22 +35,21 @@ impl LanguageModel {
             .collect::<Vec<_>>();    // collect ends mutable borrow of 'counts' and is necessary therefor
         Ok(LanguageModel{
             name: n.to_string(),
-            model: get_probalities(&counts).expect("Some error while calculating the model.")
+            model: get_probalities(&counts)?
         })
     } 
 
-    pub fn calculate_str_probability(self, unclassified: &str) -> Result<f32, &'static str> {
+    pub fn calculate_str_probability(self, unclassified: &str) -> Result<f32, LanguageModelError> {
         let mut product: f32 = 0.0;
         for ngram in get_threegram_iter(unclassified) {
-            product += self.get_ngram_probability(&ngram, 1.0)
-                .unwrap()
+            product += self.get_ngram_probability(&ngram, 1.0)?
                 .log2()
                 .abs();
         }
         Ok(product)
     }
 
-    fn get_ngram_probability(&self, key: &(char, char, char), default : f32) -> Result<f32, &'static str> {
+    fn get_ngram_probability(&self, key: &(char, char, char), default : f32) -> Result<f32, LanguageModelError> {
         if self.model.contains_key(key) {
             return Ok(self.model[key]);
         } else {
@@ -55,19 +57,19 @@ impl LanguageModel {
         }
     }
 
-    pub fn from_name(n: &str) -> Result<LanguageModel, &'static str> {
+    pub fn from_name(n: &str) -> Result<LanguageModel, LanguageModelError> {
         let name: String = String::from(n);
         let model: HashMap<(char, char, char), f32> = HashMap::new();
         return Ok(LanguageModel{name, model})
     }
 
-    pub fn from_file(path: &str) -> Result<LanguageModel, &'static str> {
+    pub fn from_file(path: &str) -> Result<LanguageModel, LanguageModelError> {
         // parse name
-        let name = LanguageModel::parse_name_from_path(path).unwrap();
+        let name = LanguageModel::parse_name_from_path(path)?;
         // init new model
-        let mut language_model = LanguageModel::from_name(&name[..]).unwrap();
+        let mut language_model = LanguageModel::from_name(&name[..])?;
         // parse model from file line by line
-        let f = fs::File::open(path).expect("Can't open model file");
+        let f = fs::File::open(path)?;
         let reader = io::BufReader::new(f);
         for line in reader.lines() {
             let mut split =
@@ -99,7 +101,7 @@ impl LanguageModel {
         Ok(language_model)
     }
 
-    pub fn parse_name_from_path(path: &str) -> Result<String, &'static str> {
+    pub fn parse_name_from_path(path: &str) -> Result<String, LanguageModelError> {
         // only build regex once
         lazy_static! {
             static ref get_name: Regex = Regex::new(r"\./data/models/([a-zA-Z0-9]+)\.model")
@@ -116,7 +118,7 @@ impl LanguageModel {
         )
     }
 
-    pub fn write_probabilities_to_file(self, path: &str) -> std::io::Result<()> {
+    pub fn write_probabilities_to_file(self, path: &str) -> Result<(), LanguageModelError> {
         let mut write_buf = String::new();
         for ((lhs, mid, rhs), count) in self.model {
             write_buf.push_str(&format!("{}{}{}\t{}", lhs, mid, rhs, count));
@@ -133,15 +135,13 @@ pub struct Inferer {
 }
 
 impl Inferer {
-    pub fn from_models_path(path: &Path) -> Result<Inferer, &'static str> {
-        let model_paths = match get_model_paths(&path) {
-            Ok(paths) => paths,
-            Err(e) => panic!("Unrecoverable error while reading model files: {}", e)
-        };
+    pub fn from_models_path(path: &Path) -> Result<Inferer, InfererError> {
+        let model_paths = get_model_paths(&path)?;
         Inferer::from_model_files(model_paths)
     }
 
-    pub fn from_model_files(model_paths: Vec<String>) -> Result<Inferer, &'static str> {
+    pub fn from_model_files(model_paths: Vec<String>) -> Result<Inferer, InfererError> {
+        // TODO Use an ARC here
         let mut language_models: Vec<LanguageModel> = Vec::new();
         let (tx, rx): (Sender<LanguageModel>, Receiver<LanguageModel>) = channel();
         let _ = model_paths
@@ -149,7 +149,10 @@ impl Inferer {
             .map(|path| {
                 let tx_ = tx.clone();  
                 thread::spawn(move || { // 'move' to copy path to prevent the closure to outlive path
-                    let model = LanguageModel::from_file(&path[..]).unwrap();
+                    let model = match LanguageModel::from_file(&path[..]) {
+                        Ok(model) => model,
+                        Err(err) => panic!("{} for file {}!", err, &path[..])
+                    };
                     tx_.send(model).unwrap();
                     drop(tx_);
                 });
@@ -161,7 +164,7 @@ impl Inferer {
         Ok(Inferer{language_models})
     }
 
-    pub fn infer(self, unclassified: String) -> Result<Vec<(String, f32)>, &'static str> {
+    pub fn infer(self, unclassified: String) -> Result<Vec<(String, f32)>, InfererError> {
         let mut prob_table: Vec<(String, f32)> = Vec::new();
         let (out_sender, out_receiver): (Sender<(String, f32)>, Receiver<(String, f32)>) = channel();
         for model in self.language_models {
