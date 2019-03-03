@@ -14,6 +14,7 @@ use std::thread;
 use std::sync::mpsc::{channel, Sender, Receiver};
 use models::errors::LanguageModelError;
 use models::errors::InfererError;
+use std::sync::Arc;
 //use std::time::Duration;
 
 pub mod errors;
@@ -141,49 +142,41 @@ impl Inferer {
     }
 
     pub fn from_model_files(model_paths: Vec<String>) -> Result<Inferer, InfererError> {
-        // TODO Use an ARC here
-        let mut language_models: Vec<LanguageModel> = Vec::new();
-        let (tx, rx): (Sender<LanguageModel>, Receiver<LanguageModel>) = channel();
-        let _ = model_paths
+        let language_models = model_paths
             .into_iter()
             .map(|path| {
-                let tx_ = tx.clone();  
-                thread::spawn(move || { // 'move' to copy path to prevent the closure to outlive path
-                    let model = match LanguageModel::from_file(&path[..]) {
-                        Ok(model) => model,
-                        Err(err) => panic!("{} for file {}!", err, &path[..])
-                    };
-                    tx_.send(model).unwrap();
-                    drop(tx_);
-                });
-            }).collect::<Vec<_>>();    // collect ends mutable borrow of 'counts' and is necessary therefor
-        drop(tx);
-        while let Ok(model) = rx.recv() {
-            language_models.push(model);
-        };
+                let model = match LanguageModel::from_file(&path[..]) {
+                    Ok(model) => model,
+                    Err(err) => panic!("{} for file {}!", err, &path[..])
+                };
+                model
+            }).collect::<Vec<LanguageModel>>();
         Ok(Inferer{language_models})
     }
 
     pub fn infer(self, unclassified: String) -> Result<Vec<(String, f32)>, InfererError> {
+        let shared_unclassified = Arc::new(unclassified);
         let mut prob_table: Vec<(String, f32)> = Vec::new();
-        let (out_sender, out_receiver): (Sender<(String, f32)>, Receiver<(String, f32)>) = channel();
+        let (sender, receiver): (Sender<(String, f32)>, Receiver<(String, f32)>) = channel();
         for model in self.language_models {
-            let out_sender_instance = out_sender.clone();
-            let abc = unclassified.clone();
+            let sender_instance = sender.clone();
+            let unclassified = Arc::clone(&shared_unclassified);
             thread::spawn(move || {
-                let tuple = (
-                    model.name.clone(),
-                    model.calculate_str_probability(&abc[..]).unwrap()
-                );
-                out_sender_instance.send(tuple).unwrap();
-                drop(out_sender_instance);
+                let name = model.name.clone();
+                let probability = match model.calculate_str_probability(&unclassified[..]) {
+                    Ok(prob) => prob,
+                    Err(err) => panic!("{} for string {}", err, &unclassified[..])
+                };
+                match sender_instance.send((name, probability)) {
+                    Ok(_) => drop(sender_instance),
+                    Err(err) => panic!("Thread couldn't send language probability because of {}", err)
+                };
             });
         };
-        drop(out_sender);
-        while let Ok(guess) = out_receiver.recv() {
+        drop(sender);
+        while let Ok(guess) = receiver.recv() {
             prob_table.push(guess);
         };
         Ok(prob_table)
     }
-}
-
+} 
