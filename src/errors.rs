@@ -1,18 +1,20 @@
+use models::errors::InfererError;
+use models::errors::LanguageModelError;
 use std::error::Error;
 use std::fmt;
 use std::io::Error as IOError;
-use models::errors::LanguageModelError;
-use models::errors::InfererError;
 use utils::errors::UtilError;
 
 #[derive(Debug)]
 pub struct ModellingError {
-    details: String
+    details: String,
 }
 
 impl ModellingError {
     pub fn new(msg: &str) -> ModellingError {
-        ModellingError{details: msg.to_string()}
+        ModellingError {
+            details: msg.to_string(),
+        }
     }
 }
 
@@ -42,15 +44,16 @@ impl From<LanguageModelError> for ModellingError {
     }
 }
 
-
 #[derive(Debug)]
 pub struct GuessingError {
-    details: String
+    details: String,
 }
 
 impl GuessingError {
     pub fn new(msg: &str) -> GuessingError {
-        GuessingError{details: msg.to_string()}
+        GuessingError {
+            details: msg.to_string(),
+        }
     }
 }
 
@@ -78,7 +81,7 @@ impl From<LanguageModelError> for GuessingError {
         let desc = format!("LanguageModelError: {}", err.description());
         GuessingError::new(&desc[..])
     }
- }
+}
 
 impl From<InfererError> for GuessingError {
     fn from(err: InfererError) -> Self {
