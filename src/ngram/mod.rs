@@ -2,16 +2,12 @@ use std::iter;
 use std::slice;
 use std::str;
 
-// warum kein Result?
 #[inline]
 pub fn char_width(byte: u8) -> usize {
-    // why not make it [usize; size] to spare one cast?
-    // why not make vector global?
-    const TABLE: [u8; 16] = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 3, 4];
-    TABLE[(byte >> 4) as usize] as usize
+    const TABLE: [usize; 16] = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 3, 4];
+    TABLE[(byte >> 4) as usize]
 }
 
-// warum kein Result?
 #[inline]
 pub fn char_offsets(text: &str) -> CharOffsets {
     CharOffsets {
@@ -32,23 +28,14 @@ impl<'a> Iterator for CharOffsets<'a> {
     type Item = usize;
 
     #[inline]
-    // where is the Some for return value?
     fn next(&mut self) -> Option<usize> {
-        // iter is not assign, other struct values are, why?
         self.iter.nth(self.step).map(|&byte| {
             let width = char_width(byte);
             self.step = width - 1;
             let current_offset = self.offset;
             self.offset += width;
-            // should be Some(current_offset)
             current_offset
         })
-    }
-
-    #[inline]
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        let length = self.iter.len();
-        ((length + 3) / 4, Some(length))
     }
 }
 
@@ -85,36 +72,10 @@ impl<'a> Iterator for CharNgrams<'a> {
     fn next(&mut self) -> Option<&'a str> {
         self.next_span().map(|(start, end)| &self.text[start..end])
     }
-
-    #[inline]
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        let (lower, upper) = self.ends.size_hint();
-        (lower, upper.map(|x| x + 1))
-    }
-}
-
-#[derive(Debug)]
-pub struct CharNgramIndices<'a>(CharNgrams<'a>);
-
-impl<'a> Iterator for CharNgramIndices<'a> {
-    type Item = (usize, &'a str);
-
-    #[inline]
-    fn next(&mut self) -> Option<(usize, &'a str)> {
-        self.0
-            .next_span()
-            .map(|(start, end)| (start, &self.0.text[start..end]))
-    }
-
-    #[inline]
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        self.0.size_hint()
-    }
 }
 
 pub trait NgramExt {
     fn char_ngrams(&self, n: usize) -> CharNgrams;
-    fn char_ngram_indices(&self, n: usize) -> CharNgramIndices;
 }
 
 impl NgramExt for str {
@@ -128,10 +89,6 @@ impl NgramExt for str {
             ends,
             finished: false,
         }
-    }
-
-    fn char_ngram_indices(&self, n: usize) -> CharNgramIndices {
-        CharNgramIndices(self.char_ngrams(n))
     }
 }
 
