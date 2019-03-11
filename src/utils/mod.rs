@@ -7,25 +7,6 @@ use utils::errors::UtilError;
 
 pub mod errors;
 
-//pub fn get_threegram_iter<'a>(content: &'a str) -> impl Iterator<Item = (char, char, char)> + 'a {
-//if content.chars().count() < 3 {
-//panic!("Language text example is too short. Minimum is 3 letters.");
-//};
-//let mut iter = content.chars();
-//// with the deep-copy (char type) ownership is taken
-//// unwrap ok, cause text length is checked above
-//let mut buf_lhs: char = iter.next().unwrap();
-//let mut buf_mid: char = iter.next().unwrap();
-//// need the move keyword to also take ownership of rhs
-//iter.map(move |rhs| {
-//let lhs = buf_lhs;
-//let mid = buf_mid;
-//buf_lhs = buf_mid;
-//buf_mid = rhs;
-//(lhs, mid, rhs)
-//})
-//}
-
 pub fn get_probability(nominator: i32, denominator: i32) -> Result<f32, UtilError> {
     if denominator > 0 {
         Ok((nominator as f32) / (denominator as f32))
@@ -38,7 +19,7 @@ pub fn get_probability(nominator: i32, denominator: i32) -> Result<f32, UtilErro
 
 pub fn get_probalities(counts: &HashMap<String, i32>) -> Result<HashMap<String, f32>, UtilError> {
     let normalisation_value: i32 = counts.values().sum();
-    let probs: HashMap<String, f32> = counts
+    Ok(counts
         .iter()
         .map(|(ngram, c)| {
             (
@@ -49,8 +30,7 @@ pub fn get_probalities(counts: &HashMap<String, i32>) -> Result<HashMap<String, 
                 },
             )
         })
-        .collect();
-    Ok(probs)
+        .collect::<HashMap<String, f32>>())
 }
 
 pub fn get_model_paths(dir: &Path) -> Result<Vec<String>, UtilError> {
