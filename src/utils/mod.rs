@@ -37,7 +37,7 @@ pub fn get_probability(nominator: i32, denominator: i32) -> Result<f32, UtilErro
 }
 
 pub fn get_probalities(counts: &HashMap<String, i32>) -> Result<HashMap<String, f32>, UtilError> {
-    let normalisation_value: i32 = counts.keys().len() as i32;
+    let normalisation_value: i32 = counts.values().sum();
     let probs: HashMap<String, f32> = counts
         .iter()
         .map(|(ngram, c)| {
