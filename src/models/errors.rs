@@ -1,3 +1,4 @@
+use smoothing::errors::SmoothingError;
 use std::error::Error;
 use std::fmt;
 use std::io::Error as IOError;
@@ -5,12 +6,14 @@ use utils::errors::UtilError;
 
 #[derive(Debug)]
 pub struct LanguageModelError {
-    details: String
+    details: String,
 }
 
 impl LanguageModelError {
     pub fn new(msg: &str) -> LanguageModelError {
-        LanguageModelError{details: msg.to_string()}
+        LanguageModelError {
+            details: msg.to_string(),
+        }
     }
 }
 
@@ -47,15 +50,23 @@ impl From<UtilError> for LanguageModelError {
     }
 }
 
+impl From<SmoothingError> for LanguageModelError {
+    fn from(err: SmoothingError) -> Self {
+        let desc = format!("SmoothingError: {}", err.description());
+        LanguageModelError::new(&desc[..])
+    }
+}
 
 #[derive(Debug)]
 pub struct InfererError {
-    details: String
+    details: String,
 }
 
 impl InfererError {
     pub fn new(msg: &str) -> InfererError {
-        InfererError{details: msg.to_string()}
+        InfererError {
+            details: msg.to_string(),
+        }
     }
 }
 

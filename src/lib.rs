@@ -10,7 +10,7 @@ use models::Inferer;
 use models::LanguageModel;
 use std::fs;
 use std::path::Path;
-use utils::sort_by_probability;
+use utils::sort_by_second_element;
 
 // these mod statements are just for the compiler to include the modules
 mod utils;
@@ -19,6 +19,7 @@ pub mod config;
 pub mod errors;
 pub mod models;
 pub mod ngram;
+pub mod smoothing;
 
 pub fn model(config: config::Config) -> Result<(), ModellingError> {
     // get language example
@@ -56,7 +57,7 @@ pub fn guess(config: config::Config) -> Result<(), GuessingError> {
     let inferer = Inferer::from_models_path(&path)?;
     // infer
     let mut prob_table = inferer.infer(unclassified)?;
-    prob_table = sort_by_probability(prob_table)?;
+    prob_table = sort_by_second_element(prob_table)?;
     for (name, prob) in prob_table {
         println!("Guessing {} with : {}", name, prob);
     }

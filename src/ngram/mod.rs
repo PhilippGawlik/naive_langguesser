@@ -39,7 +39,7 @@ impl<'a> Iterator for CharOffsets<'a> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct CharNgrams<'a> {
     text: &'a str,
     starts: CharOffsets<'a>,
