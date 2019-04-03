@@ -7,77 +7,61 @@ pub enum Sigma {
     Test,
 }
 
-pub struct Config {
+pub struct ModelConfig {
     pub filename: String,
-    pub modelname: Option<String>,
-    pub outpath: Option<String>,
+    pub modelname: String,
+    pub outpath: String,
     pub application_mode: Mode,
-    pub sigma: Option<Sigma>,
-    pub feature_length: Option<usize>,
+    pub sigma: Sigma,
+    pub feature_length: usize,
 }
 
-impl Config {
-    pub fn new(matches: clap::ArgMatches) -> Config {
-        if let Some(model_matches) = matches.subcommand_matches("model") {
-            let filename = model_matches
-                .value_of("path")
-                .unwrap() // clap ensures existing value
-                .to_string();
-            let modelname = Some(
-                model_matches
-                    .value_of("model-name")
-                    .unwrap() // clap ensures existing value
-                    .to_string(),
-            );
-            let outpath = Some(format!(
-                "data/models/{}.model",
-                model_matches
-                    .value_of("model-name")
-                    .unwrap() // clap ensures existing value
-                    .to_string()
-            ));
-            let application_mode = Mode::Model;
-            let sigma: Option<Sigma> = match model_matches.value_of("alphabet").unwrap() {
-                "test" => Some(Sigma::Test),
-                "ascii" => panic!("Alphabet ascii is not implemented"),
-                "unicode" => panic!("Alphabet unicode is not implemented"),
-                _ => panic!("Alphabet is not implemented"),
-            };
-            let feature_length = Some(
-                model_matches
-                    .value_of("n-gram-length")
-                    .unwrap()
-                    .to_string()
-                    .parse::<usize>()
-                    .unwrap(),
-            );
-            return Config {
-                filename,
-                modelname,
-                outpath,
-                application_mode,
-                sigma,
-                feature_length,
-            };
-        } else {
-            let model_matches = matches.subcommand_matches("guess").unwrap();
-            let filename = model_matches
-                .value_of("path")
-                .unwrap() // clap ensures existing value
-                .to_string();
-            let modelname = None;
-            let outpath = None;
-            let sigma = None;
-            let feature_length = None;
-            let application_mode = Mode::Guess;
-            return Config {
-                filename,
-                modelname,
-                outpath,
-                application_mode,
-                sigma,
-                feature_length,
-            };
+pub struct GuessConfig {
+    pub filename: String,
+    pub application_mode: Mode,
+}
+
+impl ModelConfig {
+    pub fn new(matches: &clap::ArgMatches) -> ModelConfig {
+        // clap ensures existing value
+        let filename = matches.value_of("path").unwrap().to_string();
+        let modelname = matches.value_of("model-name").unwrap().to_string();
+        let outpath = format!(
+            "data/models/{}.model",
+            matches.value_of("model-name").unwrap().to_string()
+        );
+        let application_mode = Mode::Model;
+        let sigma: Sigma = match matches.value_of("alphabet").unwrap() {
+            "test" => Sigma::Test,
+            "ascii" => panic!("Alphabet ascii is not implemented"),
+            "unicode" => panic!("Alphabet unicode is not implemented"),
+            _ => panic!("Alphabet is not implemented"),
+        };
+        let feature_length = matches
+            .value_of("n-gram-length")
+            .unwrap()
+            .to_string()
+            .parse::<usize>()
+            .unwrap();
+        return ModelConfig {
+            filename,
+            modelname,
+            outpath,
+            application_mode,
+            sigma,
+            feature_length,
+        };
+    }
+}
+
+impl GuessConfig {
+    pub fn new(matches: &clap::ArgMatches) -> GuessConfig {
+        // clap ensures existing value
+        let filename = matches.value_of("path").unwrap().to_string();
+        let application_mode = Mode::Guess;
+        return GuessConfig {
+            filename,
+            application_mode,
         };
     }
 }

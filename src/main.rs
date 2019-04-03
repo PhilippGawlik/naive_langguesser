@@ -3,28 +3,30 @@ extern crate naive_langguesser;
 extern crate clap;
 
 use clap::App;
-use naive_langguesser::config::Config;
-use naive_langguesser::config::Mode;
+use naive_langguesser::config::GuessConfig;
+use naive_langguesser::config::ModelConfig;
 use std::process;
 
 fn main() {
     let yaml = load_yaml!("../cli.yml");
     let matches = App::from_yaml(yaml).get_matches();
-    let config = Config::new(matches);
-    match config.application_mode {
-        Mode::Model => process::exit(match naive_langguesser::model(config) {
+    if let Some(matches) = matches.subcommand_matches("model") {
+        let config = ModelConfig::new(matches);
+        process::exit(match naive_langguesser::model(config) {
             Ok(_) => 0,
             Err(err) => {
                 eprintln!("Application error: {:?}", err);
                 1
             }
-        }),
-        Mode::Guess => process::exit(match naive_langguesser::guess(config) {
+        });
+    } else if let Some(matches) = matches.subcommand_matches("guess") {
+        let config = GuessConfig::new(matches);
+        process::exit(match naive_langguesser::guess(config) {
             Ok(_) => 0,
             Err(err) => {
                 eprintln!("Application error: {:?}", err);
                 1
             }
-        }),
+        });
     };
 }

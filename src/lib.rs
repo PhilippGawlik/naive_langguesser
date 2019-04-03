@@ -21,35 +21,29 @@ pub mod models;
 pub mod ngram;
 pub mod smoothing;
 
-pub fn model(config: config::Config) -> Result<(), ModellingError> {
+pub fn model(config: config::ModelConfig) -> Result<(), ModellingError> {
     // get language example
     let content: String = fs::read_to_string(&config.filename)?
         .replace("\n", "")
         .replace("\t", "");
     // build language model
     let language_model = LanguageModel::from_str(
-        config.modelname.as_ref().unwrap(), // config ensures existence of value
+        &config.modelname,
         &content[..],
-        config.sigma.unwrap(),
-        config.feature_length.unwrap(),
+        config.sigma,
+        config.feature_length,
     )?;
     // write language model
     language_model
-        .write_probabilities_to_file(
-            &config
-            .outpath
-            .as_ref()
-            .unwrap()  // config ensures value
-            [..],
-        )
+        .write_probabilities_to_file(&config.outpath)
         .expect(&format!(
             "Failed to write to {}",
-            &config.outpath.as_ref().unwrap() // config ensures value
+            &config.outpath // config ensures value
         ));
     Ok(())
 }
 
-pub fn guess(config: config::Config) -> Result<(), GuessingError> {
+pub fn guess(config: config::GuessConfig) -> Result<(), GuessingError> {
     // get language example
     let unclassified = fs::read_to_string(&config.filename)?
         .replace("\n", "")
