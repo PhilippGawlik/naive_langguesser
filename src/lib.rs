@@ -23,13 +23,15 @@ pub mod smoothing;
 
 pub fn model(config: config::Config) -> Result<(), ModellingError> {
     // get language example
-    let content = fs::read_to_string(&config.filename)?
+    let content: String = fs::read_to_string(&config.filename)?
         .replace("\n", "")
         .replace("\t", "");
     // build language model
     let language_model = LanguageModel::from_str(
         config.modelname.as_ref().unwrap(), // config ensures existence of value
         &content[..],
+        config.sigma.unwrap(),
+        config.feature_length.unwrap(),
     )?;
     // write language model
     language_model

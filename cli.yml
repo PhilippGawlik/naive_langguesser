@@ -5,7 +5,7 @@ about: Guesses a language from a text file
 args:
 subcommands: 
     - model:
-        about: Generate a new language models from a example text
+        about: Generate a new language model from a example text
         version: "0.1"
         author: Philipp Gawlik <philipp.gawlik@googlemail.com>
         args:
@@ -23,10 +23,24 @@ subcommands:
                 required: true
                 takes_value: true
                 help: Specifies name for generated model
+            - alphabet:
+                short: a
+                long: alphabet
+                value_name: alphabet
+                required: true
+                takes_value: true
+                help: Specifies set of characters the language model is based on. Possible values {test, ascii, unicode}
+            - n-gram-length:
+                short: l
+                long: n-gram-length
+                value_name: n-gram-length
+                required: true
+                takes_value: true
+                help: Specifies the n-gram length the language model is based on
     - guess:
         about: Guess the language of a text
         version: "0.1"
-        author: Philipp Gawlik <philipp.gawlik@googlemail.com>
+        author: Philipp Gawlik <philipp.gawlik@posteo.de>
         args:
             - path:
                 short: p

@@ -5,6 +5,7 @@ use std::collections::HashMap;
 use std::fs;
 use std::io;
 // necesary import for .lines() method of BufReader
+use config::Sigma;
 use models::errors::InfererError;
 use models::errors::LanguageModelError;
 use ngram::NgramExt;
@@ -118,10 +119,17 @@ pub struct LanguageModel {
 }
 
 impl LanguageModel {
-    pub fn from_str(name: &str, content: &str) -> Result<LanguageModel, LanguageModelError> {
-        // todo make n config element
-        let sigma = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".to_string();
-        let feature_length = 3;
+    pub fn from_str(
+        name: &str,
+        content: &str,
+        sigma_type: Sigma,
+        feature_length: usize,
+    ) -> Result<LanguageModel, LanguageModelError> {
+        let sigma = match sigma_type {
+            Sigma::Test => {
+                "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".to_string()
+            }
+        };
         let mut count_model = SimpleModel::new(&sigma, feature_length)?;
         count_model.add_content(content);
         let probs = smoothing(&count_model, SmoothingType::NoSmoothing)?;
