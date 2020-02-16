@@ -88,7 +88,7 @@ impl SimpleModel {
     pub fn add_content(&mut self, content: &str) {
         for ngram in content.char_ngrams(self.ngram_length) {
             if self.model.contains_key(ngram) {
-                let mut count = self.model.get_mut(ngram).unwrap();
+                let count = self.model.get_mut(ngram).unwrap();
                 *count += 1;
             } else {
                 self.rest += 1;
@@ -185,11 +185,11 @@ impl LanguageModel {
     pub fn parse_name_from_path(path: &str) -> Result<String, LanguageModelError> {
         // only build regex once
         lazy_static! {
-            static ref get_name: Regex =
+            static ref GET_NAME: Regex =
                 Regex::new(r"\./data/models/([a-zA-Z0-9]+)\.model").unwrap();
         };
         Ok(String::from(
-            &get_name
+            &GET_NAME
                 .captures_iter(path)
                 .next()
                 .expect("Can't parse model name from path")[1],

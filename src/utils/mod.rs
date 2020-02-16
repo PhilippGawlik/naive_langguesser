@@ -71,10 +71,10 @@ pub fn get_model_paths(dir: &Path) -> Result<Vec<String>, UtilError> {
                 );
                 // only build regex once
                 lazy_static! {
-                    static ref is_model: Regex =
+                    static ref IS_MODEL: Regex =
                         Regex::new(r".*\.model").expect("get_model_path: Can't initialise regex.");
                 }
-                if is_model.is_match(&path_str[..]) {
+                if IS_MODEL.is_match(&path_str[..]) {
                     model_paths.push(String::from(
                         path.to_str()
                             // Option to Result type
