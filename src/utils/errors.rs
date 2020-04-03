@@ -27,14 +27,14 @@ impl Error for UtilError {
 
 impl From<IOError> for UtilError {
     fn from(err: IOError) -> Self {
-        let desc = format!("io::Error: {}", err.description());
+        let desc = format!("io::Error: {}", err.to_string());
         UtilError::new(&desc[..])
     }
 }
 
 impl From<std::boxed::Box<dyn std::error::Error>> for UtilError {
     fn from(err: std::boxed::Box<dyn std::error::Error>) -> Self {
-        let desc = format!("{}", err.description());
+        let desc = format!("{}", err.to_string());
         UtilError::new(&desc[..])
     }
 }

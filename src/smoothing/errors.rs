@@ -30,14 +30,14 @@ impl Error for SmoothingError {
 
 impl From<IOError> for SmoothingError {
     fn from(err: IOError) -> Self {
-        let desc = format!("io::Error: {}", err.description());
+        let desc = format!("io::Error: {}", err.to_string());
         SmoothingError::new(&desc[..])
     }
 }
 
 impl From<UtilError> for SmoothingError {
     fn from(err: UtilError) -> Self {
-        let desc = format!("UtilError: {}", err.description());
+        let desc = format!("UtilError: {}", err.to_string());
         SmoothingError::new(&desc[..])
     }
 }

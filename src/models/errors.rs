@@ -31,28 +31,28 @@ impl Error for LanguageModelError {
 
 impl From<IOError> for LanguageModelError {
     fn from(err: IOError) -> Self {
-        let desc = format!("io::Error: {}", err.description());
+        let desc = format!("io::Error: {}", err.to_string());
         LanguageModelError::new(&desc[..])
     }
 }
 
 impl From<std::boxed::Box<dyn std::error::Error>> for LanguageModelError {
     fn from(err: std::boxed::Box<dyn std::error::Error>) -> Self {
-        let desc = format!("Error: {}", err.description());
+        let desc = format!("Error: {}", err.to_string());
         LanguageModelError::new(&desc[..])
     }
 }
 
 impl From<UtilError> for LanguageModelError {
     fn from(err: UtilError) -> Self {
-        let desc = format!("UtilError: {}", err.description());
+        let desc = format!("UtilError: {}", err.to_string());
         LanguageModelError::new(&desc[..])
     }
 }
 
 impl From<SmoothingError> for LanguageModelError {
     fn from(err: SmoothingError) -> Self {
-        let desc = format!("SmoothingError: {}", err.description());
+        let desc = format!("SmoothingError: {}", err.to_string());
         LanguageModelError::new(&desc[..])
     }
 }
@@ -84,21 +84,21 @@ impl Error for InfererError {
 
 impl From<IOError> for InfererError {
     fn from(err: IOError) -> Self {
-        let desc = format!("io::Error: {}", err.description());
+        let desc = format!("io::Error: {}", err.to_string());
         InfererError::new(&desc[..])
     }
 }
 
 impl From<std::boxed::Box<dyn std::error::Error>> for InfererError {
     fn from(err: std::boxed::Box<dyn std::error::Error>) -> Self {
-        let desc = format!("Error: {}", err.description());
+        let desc = format!("Error: {}", err.to_string());
         InfererError::new(&desc[..])
     }
 }
 
 impl From<UtilError> for InfererError {
     fn from(err: UtilError) -> Self {
-        let desc = format!("UtilError: {}", err.description());
+        let desc = format!("UtilError: {}", err.to_string());
         InfererError::new(&desc[..])
     }
 }

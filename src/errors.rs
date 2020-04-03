@@ -32,7 +32,7 @@ impl Error for ModellingError {
 
 impl From<IOError> for ModellingError {
     fn from(err: IOError) -> Self {
-        let desc = format!("io::Error: {}", err.description());
+        let desc = format!("io::Error: {}", err.to_string());
         ModellingError::new(&desc[..])
     }
 }
@@ -71,28 +71,28 @@ impl Error for GuessingError {
 
 impl From<IOError> for GuessingError {
     fn from(err: IOError) -> Self {
-        let desc = format!("io::Error: {}", err.description());
+        let desc = format!("io::Error: {}", err.to_string());
         GuessingError::new(&desc[..])
     }
 }
 
 impl From<LanguageModelError> for GuessingError {
     fn from(err: LanguageModelError) -> Self {
-        let desc = format!("LanguageModelError: {}", err.description());
+        let desc = format!("LanguageModelError: {}", err.to_string());
         GuessingError::new(&desc[..])
     }
 }
 
 impl From<InfererError> for GuessingError {
     fn from(err: InfererError) -> Self {
-        let desc = format!("InfererError: {}", err.description());
+        let desc = format!("InfererError: {}", err.to_string());
         GuessingError::new(&desc[..])
     }
 }
 
 impl From<UtilError> for GuessingError {
     fn from(err: UtilError) -> Self {
-        let desc = format!("UtilError: {}", err.description());
+        let desc = format!("UtilError: {}", err.to_string());
         GuessingError::new(&desc[..])
     }
 }
