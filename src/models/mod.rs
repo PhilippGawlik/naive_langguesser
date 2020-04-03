@@ -1,11 +1,11 @@
 extern crate itertools;
 
+use config::Sigma;
 use itertools::Itertools;
 use std::collections::HashMap;
 use std::fs;
 use std::io;
-// necesary import for .lines() method of BufReader
-use config::Sigma;
+// necessary import for .lines() method of BufReader
 use models::errors::InfererError;
 use models::errors::LanguageModelError;
 use ngram::NgramExt;
@@ -18,59 +18,61 @@ use std::sync::mpsc::{channel, Receiver, Sender};
 use std::sync::Arc;
 use std::thread;
 use utils::get_model_paths;
+use text_processing::preprocess_text;
+use text_processing::get_ngrams;
+use text_processing::errors::TextError;
 
 pub mod errors;
 
-pub fn get_feature_map(features: &HashSet<String>) -> HashMap<String, i32> {
-    features
-        .into_iter()
-        .map(move |ngram| (ngram.clone(), 0))
-        .collect::<HashMap<String, i32>>()
+
+pub struct TextModel {
+    sigma: String,
+    text: String,
 }
 
-pub fn get_features(sigma: &str, n: usize) -> Result<HashSet<String>, LanguageModelError> {
-    match n {
-        1 => Ok(sigma
-            .char_ngrams(1)
-            .map(|c| c.to_string())
-            .collect::<HashSet<String>>()),
-        2 => {
-            let sigma_shared = Arc::new(sigma);
-            let shared1 = Arc::clone(&sigma_shared);
-            let shared2 = Arc::clone(&sigma_shared);
-            Ok(shared1
-                .char_ngrams(1)
-                .cartesian_product(shared2.char_ngrams(1))
-                .map(|(a, b)| format!("{}{}", a, b))
-                .collect::<HashSet<String>>())
+
+impl TextModel {
+    pub fn new(sigma: &str, text: &str) -> Result<TextModel,TextError> {
+        let sigma: String = sigma.to_string();
+        let text: String = text.to_string();
+        Ok(TextModel {
+            sigma,
+            text
+        })
+    }
+
+    pub fn from_raw_str(sigma: &str, raw_str: &str, set_marker: Option<usize>) -> Result<TextModel, TextError> {
+        let text: String = preprocess_text(&sigma[..], &raw_str[..], set_marker)?;
+        TextModel::new(
+            &sigma[..],
+            &text[..])
+    }
+
+    pub fn get_text(&self) -> Result<&str, TextError> {
+        Ok(&self.text[..])
+    }
+
+    pub fn get_sigma(&self) -> Result<&str, TextError> {
+        Ok(&self.sigma[..])
+    }
+
+    pub fn get_ngrams(&self, ngram_length: usize) -> Result<Vec<String>, TextError> {
+        match ngram_length {
+            1 => get_ngrams(&self.text[..], 1),
+            2 => get_ngrams(&self.text[..], 2),
+            3 => get_ngrams(&self.text[..], 3),
+            _ => panic!("Can't return ngrams with length of {}", ngram_length)
         }
-        3 => {
-            let sigma_shared = Arc::new(sigma);
-            let shared1 = Arc::clone(&sigma_shared);
-            let shared2 = Arc::clone(&sigma_shared);
-            let shared3 = Arc::clone(&sigma_shared);
-            Ok(shared1
-                .char_ngrams(1)
-                .cartesian_product(
-                    shared2
-                        .char_ngrams(1)
-                        .cartesian_product(shared3.char_ngrams(1)),
-                )
-                .map(|(a, (b, c))| format!("{}{}{}", a, b, c))
-                .collect::<HashSet<String>>())
-        }
-        _ => Err(LanguageModelError::new(&format!(
-            "get_features: Feature size {} not implemented",
-            n
-        ))),
     }
 }
+
 
 pub struct SimpleModel {
     ngram_length: usize,
     pub model: HashMap<String, i32>,
     rest: i32,
 }
+
 
 impl SimpleModel {
     pub fn new(sigma_ref: &str, n: usize) -> Result<SimpleModel, LanguageModelError> {
@@ -113,10 +115,59 @@ impl SimpleModel {
     }
 }
 
+
+pub fn get_features(sigma: &str, n: usize) -> Result<HashSet<String>, LanguageModelError> {
+    match n {
+        1 => Ok(sigma
+            .char_ngrams(1)
+            .map(|c| c.to_string())
+            .collect::<HashSet<String>>()),
+        2 => {
+            let sigma_shared = Arc::new(sigma);
+            let shared1 = Arc::clone(&sigma_shared);
+            let shared2 = Arc::clone(&sigma_shared);
+            Ok(shared1
+                .char_ngrams(1)
+                .cartesian_product(shared2.char_ngrams(1))
+                .map(|(a, b)| format!("{}{}", a, b))
+                .collect::<HashSet<String>>())
+        }
+        3 => {
+            let sigma_shared = Arc::new(sigma);
+            let shared1 = Arc::clone(&sigma_shared);
+            let shared2 = Arc::clone(&sigma_shared);
+            let shared3 = Arc::clone(&sigma_shared);
+            Ok(shared1
+                .char_ngrams(1)
+                .cartesian_product(
+                    shared2
+                        .char_ngrams(1)
+                        .cartesian_product(shared3.char_ngrams(1)),
+                )
+                .map(|(a, (b, c))| format!("{}{}{}", a, b, c))
+                .collect::<HashSet<String>>())
+        }
+        _ => Err(LanguageModelError::new(&format!(
+            "get_features: Feature size {} not implemented",
+            n
+        ))),
+    }
+}
+
+
+pub fn get_feature_map(features: &HashSet<String>) -> HashMap<String, i32> {
+    features
+        .into_iter()
+        .map(move |ngram| (ngram.clone(), 0))
+        .collect::<HashMap<String, i32>>()
+}
+
+
 pub struct LanguageModel {
     pub name: String,
     pub model: HashMap<String, f32>,
 }
+
 
 impl LanguageModel {
     pub fn from_str(
@@ -212,6 +263,7 @@ impl LanguageModel {
     }
 }
 
+
 pub struct Inferer {
     pub language_models: Vec<LanguageModel>,
 }
@@ -269,6 +321,27 @@ impl Inferer {
 #[cfg(test)]
 mod test {
     use super::*;
+
+
+    #[test]
+    fn test_init_text_struct() {
+        let sigma = "abcdefghijklmnopqrstuvwxyz0123456789".to_string();
+        let raw_text = String::from("abc\t");
+        let marker_length: Option<usize> = None;
+        let text_model = TextModel::from_raw_str(&sigma[..], &raw_text[..], marker_length).unwrap();
+        let text = text_model.get_text().unwrap();
+        assert_eq!(String::from("abc"), text);
+    }
+
+    #[test]
+    fn test_init_text_struct_with_marker() {
+        let sigma = "abcdefghijklmnopqrstuvwxyz0123456789".to_string();
+        let raw_text = String::from("abc\t");
+        let marker_length: Option<usize> = Some(3);
+        let text_model = TextModel::from_raw_str(&sigma[..], &raw_text[..], marker_length).unwrap();
+        let text = text_model.get_text().unwrap();
+        assert_eq!(String::from("###abc###"), text);
+    }
 
     #[test]
     fn test_get_twogram_features() {
@@ -371,3 +444,5 @@ mod test {
         let count: usize = simple_model.get_unseen_type_count();
         assert_eq!(1, count);
     }
+}
+

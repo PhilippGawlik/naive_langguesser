@@ -37,12 +37,6 @@ impl From<IOError> for ModellingError {
     }
 }
 
-impl From<LanguageModelError> for ModellingError {
-    fn from(err: LanguageModelError) -> Self {
-        let desc = format!("LanguageModelError: {}", err.description());
-        ModellingError::new(&desc[..])
-    }
-}
 
 #[derive(Debug)]
 pub struct GuessingError {

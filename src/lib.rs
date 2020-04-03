@@ -4,10 +4,12 @@ extern crate lazy_static; //compile regex only once in loops
 extern crate itertools;
 extern crate regex;
 
+use config::Sigma;
 use errors::GuessingError;
 use errors::ModellingError;
 use models::Inferer;
 use models::LanguageModel;
+use models::TextModel;
 use std::fs;
 use std::path::Path;
 use utils::sort_by_second_element;
@@ -20,20 +22,32 @@ pub mod errors;
 pub mod models;
 pub mod ngram;
 pub mod smoothing;
+pub mod text_processing;
 
 pub fn model(config: config::ModelConfig) -> Result<(), ModellingError> {
-    // get language example
-    let content: String = fs::read_to_string(&config.filename)?
-        .replace("\n", "")
-        .replace("\t", "");
-    // build language model
+    let sigma = match config.sigma {
+        Sigma::Test => {
+            "abcdefghijklmnopqrstuvwxyz0123456789".to_string()
+        }
+    };
+    let raw_text: String = fs::read_to_string(&config.filename)
+        .expect(&format!("Failed to read language example from file: {}", &config.filename));
+    let _text_model = TextModel::from_raw_str(
+        &sigma[..],
+        &raw_text[..],
+        Some(config.feature_length))
+            .expect(&format!(
+                "Failed to build text model from content of file: {}",
+                &config.filename));
     let language_model = LanguageModel::from_str(
         &config.modelname,
-        &content[..],
+        &raw_text[..],
         config.sigma,
-        config.feature_length,
-    )?;
-    // write language model
+        config.feature_length)
+            .expect(&format!(
+                "Failed to build language model from content of file: {}",
+                &config.filename));
+    // write language model to file
     language_model
         .write_probabilities_to_file(&config.outpath)
         .expect(&format!(
