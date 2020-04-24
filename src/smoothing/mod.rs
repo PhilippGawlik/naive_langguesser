@@ -1,76 +1,99 @@
-use models::SimpleModel;
+use models::ngram_model::NGramModel;
 use smoothing::errors::SmoothingError;
 use std::collections::HashMap;
-use utils::get_probability;
-// for testing
 
 pub mod errors;
 
+/// Present types of smoothing
+///
+/// For further information see:
+///
+/// Speech and Language Processing
+/// Daniel Jurafsky / James H. Martin
+/// page 206: Smoothing
+/// ISBN 0-13-095069-6
+///
+/// # NoSmoothing
+///
+/// Don't perform smoothing/ leave counts unchanged
+///
+/// # AddOneSmoothing
+///
+/// Add one to every ngram to deal with unseen ngrams.
+/// Adjust population accordingly.
+///
+/// # WittenBellSmoothing
+///
+/// Use the count of ngrams seen once to estimate the count of ngrams not seen.
+///
 pub enum SmoothingType {
     NoSmoothing,
     AddOneSmoothing,
     WittenBellSmoothing,
 }
 
+/// Performs a redistribution of ngram counts to fill unseen ngrams
 pub fn smoothing(
-    count_model: &SimpleModel,
-    type_: SmoothingType,
-) -> Result<HashMap<String, f32>, SmoothingError> {
+    ngram_model: &mut NGramModel,
+    type_: &SmoothingType,
+) -> Result<(), SmoothingError> {
     match type_ {
-        SmoothingType::NoSmoothing => no_smoothing(count_model),
-        SmoothingType::AddOneSmoothing => add_one_smoothing(count_model),
-        SmoothingType::WittenBellSmoothing => witten_bell_smoothing_flat(count_model),
+        SmoothingType::NoSmoothing => Ok(()),
+        SmoothingType::AddOneSmoothing => add_one_to_ngram_model(ngram_model),
+        SmoothingType::WittenBellSmoothing => witten_bell_on_ngram_model(ngram_model),
     }
 }
 
-pub fn no_smoothing(count_model: &SimpleModel) -> Result<HashMap<String, f32>, SmoothingError> {
-    let total_ngram_counts: i32 = count_model.get_total_ngram_count();
-    Ok(count_model
-        .model
-        .iter()
-        .map(|(ngram, c)| {
-            let prob: f32 = get_probability(*c as f32, total_ngram_counts as f32).unwrap();
-            (ngram.to_string(), prob)
-        })
-        .collect::<HashMap<String, f32>>())
+/// Add one to every ngram to deal with unseen ngrams
+fn add_one_to_ngram_model(ngram_model: &mut NGramModel) -> Result<(), SmoothingError> {
+    let total: f64 = ngram_model.get_total_ngram_count();
+    let vocabulary_size: f64 = ngram_model.get_vocabulary_size() as f64;
+    let model: &mut HashMap<String, f64> = ngram_model.get_mut_model();
+    add_one_to_hashmap(model, total, vocabulary_size)?;
+    Ok(())
 }
 
-pub fn add_one_smoothing(
-    count_model: &SimpleModel,
-) -> Result<HashMap<String, f32>, SmoothingError> {
-    let total_ngram_counts: f32 = count_model.get_total_ngram_count() as f32;
-    let vocabulary_size: f32 = count_model.get_vocabulary_size() as f32;
-    let normalization_term: f32 = total_ngram_counts + vocabulary_size;
-    Ok(count_model
-        .model
-        .iter()
-        .map(|(ngram, c)| {
-            let add_one: f32 = (c + 1) as f32;
-            let prob: f32 = get_probability(add_one, normalization_term).unwrap();
-            (ngram.to_string(), prob)
-        })
-        .collect::<HashMap<String, f32>>())
+fn add_one_to_hashmap(
+    model: &mut HashMap<String, f64>,
+    total: f64,
+    vocabulary_size: f64
+) -> Result<(), SmoothingError> {
+    let normalization_term: f64 = total / (total + vocabulary_size);
+    for (_ngram, count) in model.iter_mut() {
+        *count = (*count + 1.0) * normalization_term;
+    };
+    Ok(())
 }
 
-pub fn witten_bell_smoothing_flat(
-    count_model: &SimpleModel,
-) -> Result<HashMap<String, f32>, SmoothingError> {
-    let total_ngram_count: f32 = count_model.get_total_ngram_count() as f32;
-    let seen_count: f32 = count_model.get_seen_type_count() as f32;
-    let unseen_count: f32 = count_model.get_unseen_type_count() as f32;
-    let normalization_term: f32 = total_ngram_count + seen_count;
-    let unseen_prob: f32 = seen_count / (unseen_count * normalization_term);
-    Ok(count_model
-        .model
-        .iter()
-        .map(|(ngram, c)| {
-            if *c == 0 {
-                (ngram.to_string(), unseen_prob)
-            } else {
-                (ngram.to_string(), (*c as f32 / normalization_term))
-            }
-        })
-        .collect::<HashMap<String, f32>>())
+/// Use count ngrams seen once to estimate count of unseen ngrams
+fn witten_bell_on_ngram_model(ngram_model: &mut NGramModel) -> Result<(), SmoothingError> {
+    let total: f64 = ngram_model.get_total_ngram_count();
+    let seen: f64 = ngram_model.get_seen_type_count() as f64;
+    let unseen: f64 = ngram_model.get_unseen_type_count() as f64;
+    let model: &mut HashMap<String, f64> = ngram_model.get_mut_model();
+    witten_bell_on_hashmap(model, total, seen, unseen)?;
+    Ok(())
+}
+
+fn witten_bell_on_hashmap(
+    model: &mut HashMap<String, f64>,
+    total: f64,
+    seen: f64,
+    unseen: f64
+) -> Result<(), SmoothingError> {
+    if seen == 0.0 || unseen == 0.0 {
+        return Ok(())
+    };
+    let normalization_term: f64 =  total / (total + seen);
+    let smoothed_unseen: f64 = (seen/ unseen) * normalization_term;
+    for (_ngram, count) in model.iter_mut() {
+        if *count > 0.0 {
+            *count = *count * normalization_term;
+        } else {
+            *count = smoothed_unseen;
+        }
+    }
+    Ok(())
 }
 
 #[cfg(test)]
@@ -78,54 +101,149 @@ mod test {
     use super::*;
 
     #[test]
-    fn test_no_smoothing() {
-        let sigma = String::from("ab");
-        let feature_length = 2;
-        let mut simple_model = SimpleModel::new(&sigma, feature_length).unwrap();
-        let content = "aabcbba";
-        simple_model.add_content(&content);
-        let probs = smoothing(&simple_model, SmoothingType::NoSmoothing).unwrap();
-        assert_eq!(&0.25, probs.get(&String::from("aa")).unwrap());
-        assert_eq!(&0.25, probs.get(&String::from("ab")).unwrap());
-        assert_eq!(&0.25, probs.get(&String::from("bb")).unwrap());
-        assert_eq!(&0.25, probs.get(&String::from("ba")).unwrap());
+    fn test_witten_bell_smoothing1() {
+        let mut model: HashMap<String, f64> = HashMap::new();
+        model.insert("a".to_string(), 2.0);
+        model.insert("b".to_string(), 2.0);
+        model.insert("c".to_string(), 0.0);
+
+        let total: f64 = 4.0;
+        let seen: f64 = 2.0;
+        let unseen: f64 = 1.0;
+
+        witten_bell_on_hashmap(&mut model, total, seen, unseen).unwrap();
+        assert_eq!(
+            &1.3333333333333333,
+            model.get("a").unwrap()
+        );
+        assert_eq!(
+            &1.3333333333333333,
+            model.get("b").unwrap()
+        );
+        assert_eq!(
+            &1.3333333333333333,
+            model.get("c").unwrap()
+        );
     }
 
     #[test]
-    fn test_add_one_smoothing() {
-        let sigma = String::from("abc");
-        let feature_length = 2;
-        let mut simple_model = SimpleModel::new(&sigma, feature_length).unwrap();
-        let content = "aaacbba";
-        simple_model.add_content(&content);
-        let probs = smoothing(&simple_model, SmoothingType::AddOneSmoothing).unwrap();
-        assert_eq!(&(1.2 / 6.0), probs.get(&String::from("aa")).unwrap());
-        assert_eq!(&(0.4 / 6.0), probs.get(&String::from("ab")).unwrap());
-        assert_eq!(&(0.8 / 6.0), probs.get(&String::from("bb")).unwrap());
-        assert_eq!(&(0.8 / 6.0), probs.get(&String::from("ba")).unwrap());
-        assert_eq!(&(0.8 / 6.0), probs.get(&String::from("ac")).unwrap());
-        assert_eq!(&(0.4 / 6.0), probs.get(&String::from("ca")).unwrap());
-        assert_eq!(&(0.4 / 6.0), probs.get(&String::from("bc")).unwrap());
-        assert_eq!(&(0.8 / 6.0), probs.get(&String::from("cb")).unwrap());
-        assert_eq!(&(0.4 / 6.0), probs.get(&String::from("cc")).unwrap());
+    fn test_witten_bell_smoothing2() {
+        let mut model: HashMap<String, f64> = HashMap::new();
+        model.insert("a".to_string(), 1.0);
+        model.insert("b".to_string(), 1.0);
+        model.insert("c".to_string(), 1.0);
+
+        let total: f64 = 3.0;
+        let seen: f64 = 3.0;
+        let unseen: f64 = 0.0;
+
+        witten_bell_on_hashmap(&mut model, total, seen, unseen).unwrap();
+        assert_eq!(
+            &1.0000000000000000,
+            model.get("a").unwrap()
+        );
+        assert_eq!(
+            &1.0000000000000000,
+            model.get("b").unwrap()
+        );
+        assert_eq!(
+            &1.0000000000000000,
+            model.get("c").unwrap()
+        );
     }
 
     #[test]
-    fn test_witten_bell_smoothing_flat() {
-        let sigma = String::from("abc");
-        let feature_length = 2;
-        let mut simple_model = SimpleModel::new(&sigma, feature_length).unwrap();
-        let content = "aaacbba";
-        simple_model.add_content(&content);
-        let probs = smoothing(&simple_model, SmoothingType::WittenBellSmoothing).unwrap();
-        assert_eq!(&0.181818182, probs.get(&String::from("aa")).unwrap());
-        assert_eq!(&0.11363637, probs.get(&String::from("ab")).unwrap());
-        assert_eq!(&0.090909091, probs.get(&String::from("bb")).unwrap());
-        assert_eq!(&0.090909091, probs.get(&String::from("ba")).unwrap());
-        assert_eq!(&0.090909091, probs.get(&String::from("ac")).unwrap());
-        assert_eq!(&0.11363637, probs.get(&String::from("ca")).unwrap());
-        assert_eq!(&0.11363637, probs.get(&String::from("bc")).unwrap());
-        assert_eq!(&0.090909091, probs.get(&String::from("cb")).unwrap());
-        assert_eq!(&0.11363637, probs.get(&String::from("cc")).unwrap());
+    fn test_witten_bell_smoothing3() {
+        let mut model: HashMap<String, f64> = HashMap::new();
+        model.insert("a".to_string(), 0.0);
+        model.insert("b".to_string(), 0.0);
+        model.insert("c".to_string(), 0.0);
+
+        let total: f64 = 0.0;
+        let seen: f64 = 0.0;
+        let unseen: f64 = 3.0;
+
+        witten_bell_on_hashmap(&mut model, total, seen, unseen).unwrap();
+        assert_eq!(
+            &0.0000000000000000,
+            model.get("a").unwrap()
+        );
+        assert_eq!(
+            &0.0000000000000000,
+            model.get("b").unwrap()
+        );
+        assert_eq!(
+            &0.0000000000000000,
+            model.get("c").unwrap()
+        );
+    }
+
+    #[test]
+    fn test_add_one_smoothing1() {
+        let mut model: HashMap<String, f64> = HashMap::new();
+        model.insert("a".to_string(), 2.0);
+        model.insert("b".to_string(), 2.0);
+        model.insert("c".to_string(), 0.0);
+        let total: f64 = 4.0;
+        let vocabulary_size: f64 = 3.0;
+        add_one_to_hashmap(&mut model, total, vocabulary_size).unwrap();
+        assert_eq!(
+            &1.7142857142857142,
+            model.get("a").unwrap()
+        );
+        assert_eq!(
+            &1.7142857142857142,
+            model.get("b").unwrap()
+        );
+        assert_eq!(
+            &0.5714285714285714,
+            model.get("c").unwrap()
+        );
+    }
+
+    #[test]
+    fn test_add_one_smoothing2() {
+        let mut model: HashMap<String, f64> = HashMap::new();
+        model.insert("a".to_string(), 0.0);
+        model.insert("b".to_string(), 0.0);
+        model.insert("c".to_string(), 0.0);
+        let total: f64 = 0.0;
+        let vocabulary_size: f64 = 3.0;
+        add_one_to_hashmap(&mut model, total, vocabulary_size).unwrap();
+        assert_eq!(
+            &0.0000000000000000,
+            model.get("a").unwrap()
+        );
+        assert_eq!(
+            &0.0000000000000000,
+            model.get("b").unwrap()
+        );
+        assert_eq!(
+            &0.0000000000000000,
+            model.get("c").unwrap()
+        );
+    }
+
+    #[test]
+    fn test_add_one_smoothing3() {
+        let mut model: HashMap<String, f64> = HashMap::new();
+        model.insert("a".to_string(), 1.0);
+        model.insert("b".to_string(), 1.0);
+        model.insert("c".to_string(), 1.0);
+        let total: f64 = 3.0;
+        let vocabulary_size: f64 = 3.0;
+        add_one_to_hashmap(&mut model, total, vocabulary_size).unwrap();
+        assert_eq!(
+            &1.0000000000000000,
+            model.get("a").unwrap()
+        );
+        assert_eq!(
+            &1.0000000000000000,
+            model.get("b").unwrap()
+        );
+        assert_eq!(
+            &1.0000000000000000,
+            model.get("c").unwrap()
+        );
     }
 }

@@ -1,73 +1,79 @@
-extern crate clap;
+//extern crate clap;
 #[macro_use]
 extern crate lazy_static; //compile regex only once in loops
 extern crate itertools;
 extern crate regex;
 
-use config::Sigma;
 use errors::GuessingError;
 use errors::ModellingError;
-use models::Inferer;
-use models::LanguageModel;
-use models::TextModel;
+use inferer::Inferer;
+use models::count_model::CountModel;
+use models::probability_model::ProbabilityModel;
+use models::text_model::TextModel;
 use std::fs;
-use std::path::Path;
-use utils::sort_by_second_element;
 
-// these mod statements are just for the compiler to include the modules
-mod utils;
-// public so main.rs can use the config
 pub mod config;
-pub mod errors;
-pub mod models;
-pub mod ngram;
-pub mod smoothing;
-pub mod text_processing;
+mod errors;
+mod inferer;
+mod models;
+mod ngram;
+mod smoothing;
+mod text_processing;
+mod utils;
 
+/// Definition of execution modes of `naive_langguesser`
+///
+/// # Model
+///
+/// Calculate a probability based language model from a text example file.
+///
+/// # Guess
+///
+/// Classify a text with the most probable language based on present language models.
+pub enum Mode {
+    Model,
+    Guess,
+}
+
+/// Calculate a probability based language model from a text example file
+///
+/// # Arguments
+///
+/// * `config` - a struct holding config settings, partly given through cli
 pub fn model(config: config::ModelConfig) -> Result<(), ModellingError> {
-    let sigma = match config.sigma {
-        Sigma::Test => {
-            "abcdefghijklmnopqrstuvwxyz0123456789".to_string()
-        }
-    };
-    let raw_text: String = fs::read_to_string(&config.filename)
-        .expect(&format!("Failed to read language example from file: {}", &config.filename));
-    let _text_model = TextModel::from_raw_str(
-        &sigma[..],
+    let raw_text: String = fs::read_to_string(&config.filename)?;
+    let text_model = TextModel::from_raw(
         &raw_text[..],
-        Some(config.feature_length))
-            .expect(&format!(
-                "Failed to build text model from content of file: {}",
-                &config.filename));
-    let language_model = LanguageModel::from_str(
-        &config.modelname,
-        &raw_text[..],
-        config.sigma,
-        config.feature_length)
-            .expect(&format!(
-                "Failed to build language model from content of file: {}",
-                &config.filename));
-    // write language model to file
-    language_model
-        .write_probabilities_to_file(&config.outpath)
-        .expect(&format!(
-            "Failed to write to {}",
-            &config.outpath // config ensures value
-        ));
+        config.sigma_id,
+        config.set_marker,
+        config.ngram_length,
+    )?;
+    let mut count_model = CountModel::from_sigma(text_model.get_sigma(), config.ngram_length)?;
+    let mut probability_model = ProbabilityModel::from_name(&config.modelname)?;
+    count_model.count_ngrams_from_text_model(&text_model)?;
+    count_model.smooth(&config.smoothing_type)?;
+    probability_model.add_unigram_probabilities(&count_model)?;
+    probability_model.add_ngram_probabilities(&count_model)?;
+    probability_model.write_to_file(&config.outpath)?;
     Ok(())
 }
 
+/// Classify a text with the most probable language based on available language models
+///
+/// # Arguments
+///
+/// * `config` - a struct holding config settings, partly given through cli
 pub fn guess(config: config::GuessConfig) -> Result<(), GuessingError> {
-    // get language example
-    let unclassified = fs::read_to_string(&config.filename)?
-        .replace("\n", "")
-        .replace("\t", "");
-    // initialise language infering struct
-    let path = Path::new("./data/models/");
-    let inferer = Inferer::from_models_path(&path)?;
-    // infer
-    let mut prob_table = inferer.infer(unclassified)?;
-    prob_table = sort_by_second_element(prob_table)?;
+    let raw_unclassified = fs::read_to_string(&config.filename)?;
+    let text_model = TextModel::from_raw(
+        &raw_unclassified[..],
+        config.sigma_id,
+        config.set_marker,
+        config.ngram_length,
+    )?;
+    let inferer: Inferer =
+        Inferer::from_models_dir(&config.model_dir, config.ngram_length, config.in_parallel)?;
+    let prob_table = inferer.infer(&text_model)?;
     for (name, prob) in prob_table {
         println!("Guessing {} with : {}", name, prob);
     }

@@ -1,9 +1,10 @@
-use models::errors::InfererError;
-use models::errors::LanguageModelError;
+use inferer::errors::InfererError;
+use models::errors::ProbabilityModelError;
+use text_processing::errors::TextError;
 use std::error::Error;
 use std::fmt;
 use std::io::Error as IOError;
-use utils::errors::UtilError;
+use models::errors::CountModelError;
 
 #[derive(Debug)]
 pub struct ModellingError {
@@ -32,11 +33,31 @@ impl Error for ModellingError {
 
 impl From<IOError> for ModellingError {
     fn from(err: IOError) -> Self {
-        let desc = format!("io::Error: {}", err.to_string());
+        let desc = format!("File reading error: {}", err.to_string());
         ModellingError::new(&desc[..])
     }
 }
 
+impl From<TextError> for ModellingError {
+    fn from(err: TextError) -> Self {
+        let desc = format!("Text processing error: {}", err.to_string());
+        ModellingError::new(&desc[..])
+    }
+}
+
+impl From<CountModelError> for ModellingError {
+    fn from(err: CountModelError) -> Self {
+        let desc = format!("Counting error: {}", err.to_string());
+        ModellingError::new(&desc[..])
+    }
+}
+
+impl From<ProbabilityModelError> for ModellingError {
+    fn from(err: ProbabilityModelError) -> Self {
+        let desc = format!("Error during probability calculation: {}", err.to_string());
+        ModellingError::new(&desc[..])
+    }
+}
 
 #[derive(Debug)]
 pub struct GuessingError {
@@ -70,13 +91,6 @@ impl From<IOError> for GuessingError {
     }
 }
 
-impl From<LanguageModelError> for GuessingError {
-    fn from(err: LanguageModelError) -> Self {
-        let desc = format!("LanguageModelError: {}", err.to_string());
-        GuessingError::new(&desc[..])
-    }
-}
-
 impl From<InfererError> for GuessingError {
     fn from(err: InfererError) -> Self {
         let desc = format!("InfererError: {}", err.to_string());
@@ -84,9 +98,9 @@ impl From<InfererError> for GuessingError {
     }
 }
 
-impl From<UtilError> for GuessingError {
-    fn from(err: UtilError) -> Self {
-        let desc = format!("UtilError: {}", err.to_string());
+impl From<TextError> for GuessingError {
+    fn from(err: TextError) -> Self {
+        let desc = format!("Text processing error: {}", err.to_string());
         GuessingError::new(&desc[..])
     }
 }

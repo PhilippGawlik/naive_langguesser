@@ -19,7 +19,7 @@ subcommands:
             - model-name:
                 short: n
                 long: model-name
-                value_name: model-name
+                value_name: model_name
                 required: true
                 takes_value: true
                 help: Specifies name for generated model
@@ -33,10 +33,21 @@ subcommands:
             - n-gram-length:
                 short: l
                 long: n-gram-length
-                value_name: n-gram-length
+                value_name: n_gram_length
                 required: true
                 takes_value: true
                 help: Specifies the n-gram length the language model is based on
+            - set-marker:
+                short: m
+                long: set-marker
+                help: Specifies if marker '#' is added to start and end of the text 
+            - smoothing-type:
+                short: s
+                long: smoothing-type
+                value_name: smoothing_type
+                required: true
+                takes_value: true
+                help: Specify the type of smoothing. Possible values {no, add_one, witten_bell}
     - guess:
         about: Guess the language of a text
         version: "0.1"
@@ -49,3 +60,25 @@ subcommands:
                 required: true
                 takes_value: true
                 help: Specifies the path to a text file holding a language artifact
+            - alphabet:
+                short: a
+                long: alphabet
+                value_name: alphabet
+                required: true
+                takes_value: true
+                help: Specifies set of characters the language model is based on. Possible values {test, ascii, unicode}
+            - n-gram-length:
+                short: l
+                long: n-gram-length
+                value_name: n_gram_length
+                required: true
+                takes_value: true
+                help: Specifies the n-gram length the language model is based on
+            - set-marker:
+                short: m
+                long: set-marker
+                help: Specifies if marker '#' is added to start and end of the text 
+            - in-parallel:
+                short: i
+                long: in-parallel
+                help: Specifies parallel guessing over language models 

@@ -5,19 +5,11 @@ use utils::errors::UtilError;
 
 pub mod errors;
 
-pub fn get_probability(nominator: f32, denominator: f32) -> Result<f32, UtilError> {
-    if denominator > 0.0 {
-        Ok(nominator / (denominator as f32))
-    } else {
-        Err(UtilError::new(
-            "get_probability: Division by zero or negative number!",
-        ))
-    }
-}
-
-pub fn get_model_paths(dir: &Path) -> Result<Vec<String>, UtilError> {
+/// Collect paths to all files of a type `.model` from a folder
+pub fn get_model_paths(dir: &str) -> Result<Vec<String>, UtilError> {
+    let model_path = Path::new(dir);
     let mut model_paths = Vec::new();
-    if dir.is_dir() {
+    if model_path.is_dir() {
         for entry in fs::read_dir(dir)? {
             let path = entry?.path();
             if path.is_dir() {
@@ -27,22 +19,18 @@ pub fn get_model_paths(dir: &Path) -> Result<Vec<String>, UtilError> {
                 let path_str = String::from(
                     path.to_str()
                         // Option to Result type
-                        .ok_or(UtilError::new(
-                            "get_model_paths: Can't convert path to string.",
-                        ))?,
+                        .ok_or(UtilError::new("Can't convert path to string."))?,
                 );
                 // only build regex once
                 lazy_static! {
                     static ref IS_MODEL: Regex =
-                        Regex::new(r".*\.model").expect("get_model_path: Can't initialise regex.");
+                        Regex::new(r".*\.model").expect("Can't initialise regex.");
                 }
                 if IS_MODEL.is_match(&path_str[..]) {
                     model_paths.push(String::from(
                         path.to_str()
                             // Option to Result type
-                            .ok_or(UtilError::new(
-                                "get_model_paths: Can't convert path to string.",
-                            ))?,
+                            .ok_or(UtilError::new("Can't convert path to string."))?,
                     ));
                 }
             }
@@ -51,6 +39,7 @@ pub fn get_model_paths(dir: &Path) -> Result<Vec<String>, UtilError> {
     Ok(model_paths)
 }
 
+/// Sort list of tuples by second element
 pub fn sort_by_second_element<T: PartialOrd>(
     mut vec: Vec<(String, T)>,
 ) -> Result<Vec<(String, T)>, UtilError> {
