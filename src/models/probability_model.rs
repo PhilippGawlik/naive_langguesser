@@ -162,7 +162,7 @@ impl ProbabilityModel {
 mod test {
     use super::*;
     use smoothing::SmoothingType;
-    use models::sigma::Sigma;
+    use models::sigma::{Sigma, SigmaType};
     use TextModel;
 
     #[test]
@@ -170,9 +170,9 @@ mod test {
         let ngram_length: usize = 1;
         let set_marker: Option<u8> = None;
         let smoothing_type: SmoothingType = SmoothingType::NoSmoothing;
-        let mut text_model =
-            TextModel::new(ngram_length, set_marker, &Sigma::AlphaNum).unwrap();
-        let mut count_model = CountModel::from_sigma(text_model.get_sigma(), ngram_length).unwrap();
+        let sigma: Sigma = Sigma::new(set_marker, SigmaType::AlphaNum);
+        let mut text_model = TextModel::new(ngram_length, &sigma).unwrap();
+        let mut count_model = CountModel::from_sigma(&sigma, ngram_length).unwrap();
         let mut probability_model = ProbabilityModel::from_name("test").unwrap();
         let raw_text = String::from("aabcbaa\t");
         text_model.add(&raw_text[..]);
@@ -191,9 +191,10 @@ mod test {
         let ngram_length: usize = 1;
         let set_marker: Option<u8> = Some(35);
         let smoothing_type: SmoothingType = SmoothingType::NoSmoothing;
+        let sigma: Sigma = Sigma::new(set_marker, SigmaType::AlphaNum);
         let mut text_model =
-            TextModel::new(ngram_length, set_marker, &Sigma::AlphaNum).unwrap();
-        let mut count_model = CountModel::from_sigma(text_model.get_sigma(), ngram_length).unwrap();
+            TextModel::new(ngram_length, &sigma).unwrap();
+        let mut count_model = CountModel::from_sigma(&sigma, ngram_length).unwrap();
         let mut probability_model = ProbabilityModel::from_name("test").unwrap();
         let raw_text = String::from("aabcbaa\t");
         text_model.add(&raw_text[..]);
@@ -212,10 +213,11 @@ mod test {
         let raw_text = String::from("aabcbaa\t");
         let ngram_length: usize = 2;
         let set_marker: Option<u8> = Some(35);
+        let sigma: Sigma = Sigma::new(set_marker, SigmaType::AlphaNum);
         let smoothing_type: SmoothingType = SmoothingType::NoSmoothing;
         let mut text_model =
-            TextModel::new(ngram_length, set_marker, &Sigma::AlphaNum).unwrap();
-        let mut count_model = CountModel::from_sigma(text_model.get_sigma(), ngram_length).unwrap();
+            TextModel::new(ngram_length, &sigma).unwrap();
+        let mut count_model = CountModel::from_sigma(&sigma, ngram_length).unwrap();
         let mut probability_model = ProbabilityModel::from_name("test").unwrap();
         text_model.add(&raw_text[..]);
         count_model

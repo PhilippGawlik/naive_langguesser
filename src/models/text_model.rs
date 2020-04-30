@@ -1,34 +1,33 @@
-use models::sigma::{Sigma, get_ngrams};
-use std::collections::HashSet;
+use models::sigma::Sigma;
 use text_processing::errors::TextError;
+use std::str;
+use ngram::NgramExt;
+
+pub fn get_ngrams(text: &str, n: usize) -> Vec<String> {
+    text.char_ngrams(n)
+        .map(|c| c.to_string())
+        .collect::<Vec<String>>()
+}
 
 pub struct TextModel {
     set_confix: Option<String>,
-    sigma: HashSet<u8>,
+    sigma: Sigma,
     text: Vec<u8>,
 }
 
 impl TextModel {
     pub fn new(
         ngram_length: usize,
-        set_marker: Option<u8>,
-        sigma: &Sigma,
+        sigma_ref: &Sigma,
     ) -> Result<TextModel, TextError> {
-        let sigma_as_bytes: HashSet<u8> = match set_marker {
-            Some(marker_byte) => {
-                let mut bytes = sigma.as_bytes();
-                bytes.insert(marker_byte);
-                bytes
-            }
-            None => sigma.as_bytes(),
-        };
-        let set_confix: Option<String> = match set_marker {
+        let sigma: Sigma = sigma_ref.clone();
+        let set_confix: Option<String> = match sigma.set_marker {
             Some(marker_byte) => Some(TextModel::get_confix(marker_byte, ngram_length)?),
             None => None,
         };
         Ok(TextModel {
             set_confix,
-            sigma: sigma_as_bytes,
+            sigma,
             text: Vec::new(),
         })
     }
@@ -50,20 +49,9 @@ impl TextModel {
         let extension = text
             .as_bytes()
             .into_iter()
-            .filter_map(|b| self.in_sigma(b))
+            .filter_map(|b| self.sigma.contains(b))
             .collect::<Vec<u8>>();
         self.text.extend(extension);
-    }
-
-    fn in_sigma(&self, byte: &u8) -> Option<u8> {
-        match self.sigma.contains(byte) {
-            true => Some(byte.clone()),
-            false => None,
-        }
-    }
-
-    pub fn get_sigma(&self) -> &HashSet<u8> {
-        &self.sigma
     }
 
     pub fn get_text(&self) -> String {
@@ -91,18 +79,18 @@ impl TextModel {
     }
 }
 
-
 #[cfg(test)]
 mod test {
     use super::*;
+    use models::sigma::SigmaType;
 
     #[test]
     fn test_alphanum_text_model1() {
         let raw_text = String::from("abc\t");
-        let sigma: Sigma = Sigma::AlphaNum;
         let set_marker: Option<u8> = None;
+        let sigma: Sigma = Sigma::new(set_marker, SigmaType::AlphaNum);
         let ngram_length: usize = 1;
-        let mut text_model = TextModel::new(ngram_length, set_marker, &sigma).unwrap();
+        let mut text_model = TextModel::new(ngram_length, &sigma).unwrap();
         text_model.add(&raw_text[..]);
         let text = text_model.get_text();
         assert_eq!("abc", &text[..]);
@@ -111,10 +99,10 @@ mod test {
     #[test]
     fn test_alphanum_text_model2() {
         let raw_text = String::from("abc\t");
-        let sigma: Sigma = Sigma::AlphaNum;
         let set_marker: Option<u8> = Some(35);
+        let sigma: Sigma = Sigma::new(set_marker, SigmaType::AlphaNum);
         let ngram_length: usize = 3;
-        let mut text_model = TextModel::new(ngram_length, set_marker, &sigma).unwrap();
+        let mut text_model = TextModel::new(ngram_length, &sigma).unwrap();
         text_model.add(&raw_text[..]);
         let text = text_model.get_text();
         assert_eq!("###abc###", &text[..]);
@@ -123,10 +111,10 @@ mod test {
     #[test]
     fn test_ascii_text_model() {
         let input = String::from("abc💖");
-        let sigma: Sigma = Sigma::Ascii;
         let set_marker: Option<u8> = None;
+        let sigma: Sigma = Sigma::new(set_marker, SigmaType::AlphaNum);
         let ngram_length: usize = 3;
-        let mut text_model = TextModel::new(ngram_length, set_marker, &sigma).unwrap();
+        let mut text_model = TextModel::new(ngram_length, &sigma).unwrap();
         text_model.add(&input[..]);
         let text = text_model.get_text();
         assert_eq!("abc", &text[..]);

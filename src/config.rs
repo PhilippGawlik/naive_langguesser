@@ -1,5 +1,5 @@
 use smoothing::SmoothingType;
-use models::sigma::Sigma;
+use models::sigma::{SigmaType, Sigma};
 use Mode;
 
 /// Hold configuration for `Model` mode
@@ -39,22 +39,23 @@ impl ModelConfig {
             matches.value_of("model-name").unwrap().to_string()
         );
         let application_mode = Mode::Model;
-        let sigma: Sigma = match matches.value_of("alphabet").unwrap() {
-            "alphanum" => Sigma::AlphaNum,
-            "ascii" => Sigma::Ascii,
-            _ => panic!("Alphabet is not implemented"),
-        };
         let ngram_length = matches
             .value_of("n-gram-length")
             .unwrap()
             .to_string()
             .parse::<usize>()
             .unwrap();
+        let sigma_type: SigmaType = match matches.value_of("alphabet").unwrap() {
+            "alphanum" => SigmaType::AlphaNum,
+            "ascii" => SigmaType::Ascii,
+            _ => panic!("Alphabet is not implemented"),
+        };
         let marker_symbol: u8 = 35;
         let set_marker: Option<u8> = match matches.is_present("set-marker") {
             true => Some(marker_symbol),
             false => None,
         };
+        let sigma: Sigma = Sigma::new(set_marker, sigma_type);
         let smoothing_type: SmoothingType = match matches.value_of("smoothing-type").unwrap() {
             "no" => SmoothingType::NoSmoothing,
             "add_one" => SmoothingType::AddOneSmoothing,
@@ -105,22 +106,23 @@ impl GuessConfig {
         let filename = matches.value_of("path").unwrap().to_string();
         let model_dir = "./data/models/";
         let application_mode = Mode::Guess;
-        let sigma: Sigma = match matches.value_of("alphabet").unwrap() {
-            "alphanum" => Sigma::AlphaNum,
-            "ascii" => Sigma::Ascii,
-            _ => panic!("Alphabet is not implemented"),
-        };
         let ngram_length = matches
             .value_of("n-gram-length")
             .unwrap()
             .to_string()
             .parse::<usize>()
             .unwrap();
+        let sigma_type: SigmaType = match matches.value_of("alphabet").unwrap() {
+            "alphanum" => SigmaType::AlphaNum,
+            "ascii" => SigmaType::Ascii,
+            _ => panic!("Alphabet is not implemented"),
+        };
         let marker_symbol: u8 = 35;
         let set_marker: Option<u8> = match matches.is_present("set-marker") {
             true => Some(marker_symbol),
             false => None,
         };
+        let sigma: Sigma = Sigma::new(set_marker, sigma_type);
         let in_parallel: bool = matches.is_present("in-parallel");
         return GuessConfig {
             filename,

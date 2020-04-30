@@ -1,10 +1,10 @@
 use models::errors::CountModelError;
 use models::ngram_model::NGramModel;
-use models::sigma::get_total_list_of_ngrams;
 use models::text_model::TextModel;
 use smoothing::{smoothing, SmoothingType};
 use std::collections::HashMap;
 use std::collections::HashSet;
+use models::sigma::{Sigma, NGramExt};
 
 /// Hold ngram occurence models of various length
 pub struct CountModel {
@@ -23,18 +23,10 @@ impl CountModel {
     ///
     /// `sigma` -  relevant alphabet for ngrams
     /// `max_ngram_length` - max length of ngrams
-    pub fn from_sigma(sigma: &HashSet<u8>, max_ngram_length: usize) -> Result<CountModel, CountModelError> {
+    pub fn from_sigma(sigma: &Sigma, max_ngram_length: usize) -> Result<CountModel, CountModelError> {
         let mut ngram_models = HashMap::new();
         for ngram_length in 1..=max_ngram_length {
-            let ngrams: HashSet<String> = match get_total_list_of_ngrams(sigma, ngram_length) {
-                Some(ngrams) => ngrams,
-                None => {
-                    return Err(CountModelError::new(&format!(
-                        "Ngram size {} not implemented",
-                        ngram_length
-                    )))
-                }
-            };
+            let ngrams: HashSet<String> = sigma.string_ngrams(ngram_length);
             let ngram_model = NGramModel::from_ngrams(&ngrams)?;
             ngram_models.insert(ngram_length, ngram_model);
         }
@@ -148,10 +140,11 @@ impl<'a> Iterator for CountModelTupleIter<'a> {
 #[cfg(test)]
 mod test {
     use super::*;
+    use models::sigma::SigmaType;
 
     #[test]
     fn test_count_model1() {
-        let sigma: HashSet<u8> = (97..=99).into_iter().collect();
+        let sigma: Sigma = Sigma::new(None, SigmaType::Test);
         let ngram_length: usize = 2;
         let mut count_model = CountModel::from_sigma(&sigma, ngram_length).unwrap();
         let ngram_model: &mut NGramModel = count_model.get_mut_ngram_model(ngram_length).unwrap();
@@ -161,7 +154,7 @@ mod test {
 
     #[test]
     fn test_count_model2() {
-        let sigma: HashSet<u8> = (97..=99).into_iter().collect();
+        let sigma: Sigma = Sigma::new(None, SigmaType::Test);
         let ngram_length: usize = 2;
         let mut count_model = CountModel::from_sigma(&sigma, ngram_length).unwrap();
         let ngrams: Vec<String> = vec!["aa".to_string(), "aa".to_string(), "ab".to_string()];

@@ -1,17 +1,25 @@
+use itertools::Itertools; // cartesian_product
 use std::collections::HashSet;
 use std::sync::Arc;
-use ngram::NgramExt;
-use itertools::Itertools;  // cartesian_product
 
-pub enum Sigma {
+#[derive(Clone)]
+pub enum SigmaType {
     AlphaNum,
     Ascii,
+    Test,
+}
+
+#[derive(Clone)]
+pub struct Sigma {
+    pub set_marker: Option<u8>,
+    sigma: HashSet<u8>,
+    type_: SigmaType,
 }
 
 impl Sigma {
-    pub fn as_bytes(&self) -> HashSet<u8> {
-        match *self {
-            Sigma::AlphaNum => {
+    pub fn new(set_marker: Option<u8>, type_: SigmaType) -> Sigma {
+        let mut sigma: HashSet<u8> = match type_ {
+            SigmaType::AlphaNum => {
                 let numbers: HashSet<u8> = (48..=57).into_iter().collect();
                 let capitals: HashSet<u8> = (65..=90).into_iter().collect();
                 let lower: HashSet<u8> = (97..=122).into_iter().collect();
@@ -20,57 +28,70 @@ impl Sigma {
                 sigma.extend(capitals);
                 sigma.extend(lower);
                 sigma
+            }
+            SigmaType::Ascii => (0..=127).into_iter().collect(),
+            SigmaType::Test => (97..=99).into_iter().collect(),
+        };
+        match set_marker {
+            Some(byte) => {
+                sigma.insert(byte)
             },
-            Sigma::Ascii => (0..=127).into_iter().collect()
+            None => false
+        };
+        Sigma {set_marker, sigma, type_}
+    }
+
+    pub fn contains(&self, byte: &u8) -> Option<u8> {
+        match self.sigma.contains(byte) {
+            true => Some(byte.clone()),
+            false => None,
         }
+    }
+
+    pub fn as_bytes(&self) -> &HashSet<u8> {
+        &self.sigma
     }
 }
 
-pub fn get_ngrams(text: &str, n: usize) -> Vec<String> {
-    text.char_ngrams(n)
-        .map(|c| c.to_string())
-        .collect::<Vec<String>>()
+
+pub trait NGramExt {
+    fn string_ngrams(&self, n: usize) -> HashSet<String>;
 }
 
-/// Generate all ngrams of a certain length and alphabet
-pub fn get_total_list_of_ngrams(sigma: &HashSet<u8>, ngram_length: usize) -> Option<HashSet<String>> {
-    match ngram_length {
-        1 => Some(
-            sigma
+impl NGramExt for Sigma {
+    fn string_ngrams(&self, ngram_length: usize) -> HashSet<String> {
+        match ngram_length {
+            1 => self
+                .as_bytes()
                 .iter()
                 .map(|b| (*b as char).to_string())
                 .collect::<HashSet<String>>(),
-        ),
-        2 => {
-            let sigma_shared = Arc::new(sigma);
-            let shared1 = Arc::clone(&sigma_shared);
-            let shared2 = Arc::clone(&sigma_shared);
-            Some(
+            2 => {
+                let sigma_shared = Arc::new(self.as_bytes());
+                let shared1 = Arc::clone(&sigma_shared);
+                let shared2 = Arc::clone(&sigma_shared);
                 shared1
                     .iter()
                     .cartesian_product(shared2.iter())
                     .map(|(a, b)| format!("{}{}", *a as char, *b as char))
-                    .collect::<HashSet<String>>(),
-            )
-        }
-        3 => {
-            let sigma_shared = Arc::new(sigma);
-            let shared1 = Arc::clone(&sigma_shared);
-            let shared2 = Arc::clone(&sigma_shared);
-            let shared3 = Arc::clone(&sigma_shared);
-            Some(
+                    .collect::<HashSet<String>>()
+            }
+            3 => {
+                let sigma_shared = Arc::new(self.as_bytes());
+                let shared1 = Arc::clone(&sigma_shared);
+                let shared2 = Arc::clone(&sigma_shared);
+                let shared3 = Arc::clone(&sigma_shared);
                 shared1
                     .iter()
-                    .cartesian_product(
-                        shared2
-                            .iter()
-                            .cartesian_product(shared3.iter()),
-                    )
+                    .cartesian_product(shared2.iter().cartesian_product(shared3.iter()))
                     .map(|(a, (b, c))| format!("{}{}{}", *a as char, *b as char, *c as char))
-                    .collect::<HashSet<String>>(),
-            )
+                    .collect::<HashSet<String>>()
+            }
+            _ => panic!(
+                "Trait NGramExt not implemented for length: {}",
+                ngram_length
+            ),
         }
-        _ => None,
     }
 }
 
@@ -80,8 +101,8 @@ mod test {
 
     #[test]
     fn test_get_unigram_features() {
-        let sigma: HashSet<u8> = (97..=99).into_iter().collect();
-        let ngrams = get_total_list_of_ngrams(&sigma, 1).unwrap();
+        let sigma: Sigma = Sigma::new(None, SigmaType::Test);
+        let ngrams = sigma.string_ngrams(1);
         let mut result: HashSet<String> = HashSet::new();
         result.insert(String::from("a"));
         result.insert(String::from("b"));
@@ -91,8 +112,8 @@ mod test {
 
     #[test]
     fn test_get_bigram_features() {
-        let sigma: HashSet<u8> = (97..=99).into_iter().collect();
-        let ngrams = get_total_list_of_ngrams(&sigma, 2).unwrap();
+        let sigma: Sigma = Sigma::new(None, SigmaType::Test);
+        let ngrams = sigma.string_ngrams(2);
         let mut result: HashSet<String> = HashSet::new();
         result.insert(String::from("aa"));
         result.insert(String::from("ab"));
@@ -108,8 +129,8 @@ mod test {
 
     #[test]
     fn test_get_threegram_features() {
-        let sigma: HashSet<u8> = (97..=99).into_iter().collect();
-        let ngrams = get_total_list_of_ngrams(&sigma, 3).unwrap();
+        let sigma: Sigma = Sigma::new(None, SigmaType::Test);
+        let ngrams = sigma.string_ngrams(3);
         let mut result: HashSet<String> = HashSet::new();
         result.insert(String::from("cbc"));
         result.insert(String::from("bcc"));

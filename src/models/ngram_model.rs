@@ -2,7 +2,7 @@ use models::errors::NGramModelError;
 use std::collections::HashMap;
 use std::collections::HashSet;
 
-/// Hold mapping of ngrams to the related occurency counts 
+/// Hold mapping of ngrams to the related occurency counts
 ///
 /// Occurency counts are stored as `f64` float to allow smoothing.
 ///
@@ -14,9 +14,7 @@ pub struct NGramModel {
 }
 
 impl NGramModel {
-    pub fn from_ngrams(
-        ngrams: &HashSet<String>,
-    ) -> Result<NGramModel, NGramModelError> {
+    pub fn from_ngrams(ngrams: &HashSet<String>) -> Result<NGramModel, NGramModelError> {
         let model: HashMap<String, f64> = ngrams
             .into_iter()
             .map(move |ngram| (ngram.clone(), 0.0))
@@ -80,18 +78,17 @@ impl NGramModel {
 #[cfg(test)]
 mod test {
     use super::*;
-    use models::sigma::{get_ngrams, get_total_list_of_ngrams};
+    use models::sigma::{NGramExt, Sigma, SigmaType};
+    use models::text_model::get_ngrams;
 
     #[test]
     fn test_ngram_model1() {
-
-        let mut sigma: HashSet<u8> = (97..=99).into_iter().collect();
-        sigma.insert(35);   // add marker symbol to sigma
+        let set_marker: Option<u8> = Some(35);
+        let sigma: Sigma = Sigma::new(set_marker, SigmaType::Test);
         let text = String::from("#aabcbaa#");
         let ngram_length: usize = 1;
         let ngrams = get_ngrams(&text[..], ngram_length);
-        let total_list_of_ngrams = get_total_list_of_ngrams(&sigma, ngram_length).unwrap();
-        let mut ngram_model = NGramModel::from_ngrams(&total_list_of_ngrams).unwrap();
+        let mut ngram_model = NGramModel::from_ngrams(&sigma.string_ngrams(ngram_length)).unwrap();
         ngram_model.add_ngrams(&ngrams).unwrap();
         assert_eq!(&4.0, ngram_model.get_ngram_count("a").unwrap());
         assert_eq!(&2.0, ngram_model.get_ngram_count("b").unwrap());
@@ -101,13 +98,12 @@ mod test {
 
     #[test]
     fn test_ngram_model2() {
-        let mut sigma: HashSet<u8> = (97..=99).into_iter().collect();
-        sigma.insert(35);   // add marker symbol to sigma
+        let set_marker: Option<u8> = Some(35);
+        let sigma: Sigma = Sigma::new(set_marker, SigmaType::Test);
         let text = String::from("#aabcbaa#");
         let ngram_length: usize = 1;
         let ngrams = get_ngrams(&text[..], ngram_length);
-        let total_list_of_ngrams = get_total_list_of_ngrams(&sigma, ngram_length).unwrap();
-        let mut ngram_model = NGramModel::from_ngrams(&total_list_of_ngrams).unwrap();
+        let mut ngram_model = NGramModel::from_ngrams(&sigma.string_ngrams(ngram_length)).unwrap();
         ngram_model.add_ngrams(&ngrams).unwrap();
         assert_eq!(&4.0, ngram_model.get_ngram_count("a").unwrap());
         assert_eq!(&2.0, ngram_model.get_ngram_count("b").unwrap());
@@ -117,12 +113,12 @@ mod test {
 
     #[test]
     fn test_ngram_model3() {
-        let sigma: HashSet<u8> = (97..=99).into_iter().collect();
+        let set_marker: Option<u8> = None;
+        let sigma: Sigma = Sigma::new(set_marker, SigmaType::Test);
         let text = String::from("aabcbaa");
         let ngram_length: usize = 2;
         let ngrams = get_ngrams(&text[..], ngram_length);
-        let total_list_of_ngrams = get_total_list_of_ngrams(&sigma, ngram_length).unwrap();
-        let mut ngram_model = NGramModel::from_ngrams(&total_list_of_ngrams).unwrap();
+        let mut ngram_model = NGramModel::from_ngrams(&sigma.string_ngrams(ngram_length)).unwrap();
         ngram_model.add_ngrams(&ngrams).unwrap();
         assert_eq!(&2.0, ngram_model.get_ngram_count("aa").unwrap());
         assert_eq!(&1.0, ngram_model.get_ngram_count("ab").unwrap());
@@ -136,13 +132,12 @@ mod test {
 
     #[test]
     fn test_ngram_model4() {
-        let mut sigma: HashSet<u8> = (97..=99).into_iter().collect();
-        sigma.insert(35);   // add marker symbol to sigma
+        let set_marker: Option<u8> = Some(35);
+        let sigma: Sigma = Sigma::new(set_marker, SigmaType::Test);
         let text = String::from("##aabcbaa##");
         let ngram_length: usize = 2;
         let ngrams = get_ngrams(&text[..], ngram_length);
-        let total_list_of_ngrams = get_total_list_of_ngrams(&sigma, ngram_length).unwrap();
-        let mut ngram_model = NGramModel::from_ngrams(&total_list_of_ngrams).unwrap();
+        let mut ngram_model = NGramModel::from_ngrams(&sigma.string_ngrams(ngram_length)).unwrap();
         ngram_model.add_ngrams(&ngrams).unwrap();
         assert_eq!(&2.0, ngram_model.get_ngram_count("aa").unwrap());
         assert_eq!(&1.0, ngram_model.get_ngram_count("ab").unwrap());
@@ -164,12 +159,12 @@ mod test {
 
     #[test]
     fn test_ngram_model5() {
-        let sigma: HashSet<u8> = (97..=98).into_iter().collect();
+        let set_marker: Option<u8> = None;
+        let sigma: Sigma = Sigma::new(set_marker, SigmaType::Test);
         let text = String::from("aabbba");
         let ngram_length: usize = 2;
         let ngrams = get_ngrams(&text[..], ngram_length);
-        let total_list_of_ngrams = get_total_list_of_ngrams(&sigma, ngram_length).unwrap();
-        let mut ngram_model = NGramModel::from_ngrams(&total_list_of_ngrams).unwrap();
+        let mut ngram_model = NGramModel::from_ngrams(&sigma.string_ngrams(ngram_length)).unwrap();
         ngram_model.add_ngrams(&ngrams).unwrap();
         let count: f64 = ngram_model.get_total_ngram_count();
         assert_eq!(5.0, count);
@@ -177,25 +172,25 @@ mod test {
 
     #[test]
     fn test_ngram_model6() {
-        let sigma: HashSet<u8> = (97..=98).into_iter().collect();
-        let text = String::from("aabbba");
+        let set_marker: Option<u8> = None;
+        let sigma: Sigma = Sigma::new(set_marker, SigmaType::Test);
+        let text = String::from("aabbbac");
         let ngram_length: usize = 2;
         let ngrams = get_ngrams(&text[..], ngram_length);
-        let total_list_of_ngrams = get_total_list_of_ngrams(&sigma, ngram_length).unwrap();
-        let mut ngram_model = NGramModel::from_ngrams(&total_list_of_ngrams).unwrap();
+        let mut ngram_model = NGramModel::from_ngrams(&sigma.string_ngrams(ngram_length)).unwrap();
         ngram_model.add_ngrams(&ngrams).unwrap();
         let count: usize = ngram_model.get_vocabulary_size();
-        assert_eq!(4, count);
+        assert_eq!(9, count);
     }
 
     #[test]
     fn test_ngram_model7() {
-        let sigma: HashSet<u8> = (97..=98).into_iter().collect();
+        let set_marker: Option<u8> = None;
+        let sigma: Sigma = Sigma::new(set_marker, SigmaType::Test);
         let text = String::from("abbba");
         let ngram_length: usize = 2;
         let ngrams = get_ngrams(&text[..], ngram_length);
-        let total_list_of_ngrams = get_total_list_of_ngrams(&sigma, ngram_length).unwrap();
-        let mut ngram_model = NGramModel::from_ngrams(&total_list_of_ngrams).unwrap();
+        let mut ngram_model = NGramModel::from_ngrams(&sigma.string_ngrams(ngram_length)).unwrap();
         ngram_model.add_ngrams(&ngrams).unwrap();
         let count: usize = ngram_model.get_seen_type_count();
         assert_eq!(3, count);
@@ -203,14 +198,14 @@ mod test {
 
     #[test]
     fn test_ngram_model8() {
-        let sigma: HashSet<u8> = (97..=98).into_iter().collect();
+        let set_marker: Option<u8> = None;
+        let sigma: Sigma = Sigma::new(set_marker, SigmaType::Test);
         let text = String::from("abbba");
         let ngram_length: usize = 2;
         let ngrams = get_ngrams(&text[..], ngram_length);
-        let total_list_of_ngrams = get_total_list_of_ngrams(&sigma, ngram_length).unwrap();
-        let mut ngram_model = NGramModel::from_ngrams(&total_list_of_ngrams).unwrap();
+        let mut ngram_model = NGramModel::from_ngrams(&sigma.string_ngrams(ngram_length)).unwrap();
         ngram_model.add_ngrams(&ngrams).unwrap();
         let count: usize = ngram_model.get_unseen_type_count();
-        assert_eq!(1, count);
+        assert_eq!(6, count);
     }
 }
