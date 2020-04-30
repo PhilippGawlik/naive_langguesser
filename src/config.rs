@@ -1,5 +1,5 @@
 use smoothing::SmoothingType;
-use text_processing::SigmaID;
+use models::sigma::Sigma;
 use Mode;
 
 /// Hold configuration for `Model` mode
@@ -19,9 +19,9 @@ pub struct ModelConfig {
     pub modelname: String,
     pub outpath: String,
     pub application_mode: Mode,
-    pub sigma_id: SigmaID,
+    pub sigma: Sigma,
     pub ngram_length: usize,
-    pub set_marker: Option<&'static str>,
+    pub set_marker: Option<u8>,
     pub smoothing_type: SmoothingType,
 }
 
@@ -39,10 +39,9 @@ impl ModelConfig {
             matches.value_of("model-name").unwrap().to_string()
         );
         let application_mode = Mode::Model;
-        let sigma_id: SigmaID = match matches.value_of("alphabet").unwrap() {
-            "test" => SigmaID::Test,
-            "ascii" => SigmaID::Ascii,
-            "unicode" => SigmaID::Unicode,
+        let sigma: Sigma = match matches.value_of("alphabet").unwrap() {
+            "alphanum" => Sigma::AlphaNum,
+            "ascii" => Sigma::Ascii,
             _ => panic!("Alphabet is not implemented"),
         };
         let ngram_length = matches
@@ -51,8 +50,8 @@ impl ModelConfig {
             .to_string()
             .parse::<usize>()
             .unwrap();
-        let marker_symbol = "#";
-        let set_marker: Option<&'static str> = match matches.is_present("set-marker") {
+        let marker_symbol: u8 = 35;
+        let set_marker: Option<u8> = match matches.is_present("set-marker") {
             true => Some(marker_symbol),
             false => None,
         };
@@ -67,7 +66,7 @@ impl ModelConfig {
             modelname,
             outpath,
             application_mode,
-            sigma_id,
+            sigma,
             ngram_length,
             set_marker,
             smoothing_type,
@@ -90,9 +89,9 @@ pub struct GuessConfig {
     pub filename: String,
     pub model_dir: &'static str,
     pub application_mode: Mode,
-    pub sigma_id: SigmaID,
+    pub sigma: Sigma,
     pub ngram_length: usize,
-    pub set_marker: Option<&'static str>,
+    pub set_marker: Option<u8>,
     pub in_parallel: bool,
 }
 
@@ -106,10 +105,9 @@ impl GuessConfig {
         let filename = matches.value_of("path").unwrap().to_string();
         let model_dir = "./data/models/";
         let application_mode = Mode::Guess;
-        let sigma_id: SigmaID = match matches.value_of("alphabet").unwrap() {
-            "test" => SigmaID::Test,
-            "ascii" => SigmaID::Ascii,
-            "unicode" => SigmaID::Unicode,
+        let sigma: Sigma = match matches.value_of("alphabet").unwrap() {
+            "alphanum" => Sigma::AlphaNum,
+            "ascii" => Sigma::Ascii,
             _ => panic!("Alphabet is not implemented"),
         };
         let ngram_length = matches
@@ -118,8 +116,8 @@ impl GuessConfig {
             .to_string()
             .parse::<usize>()
             .unwrap();
-        let marker_symbol = "#";
-        let set_marker: Option<&'static str> = match matches.is_present("set-marker") {
+        let marker_symbol: u8 = 35;
+        let set_marker: Option<u8> = match matches.is_present("set-marker") {
             true => Some(marker_symbol),
             false => None,
         };
@@ -128,7 +126,7 @@ impl GuessConfig {
             filename,
             model_dir,
             application_mode,
-            sigma_id,
+            sigma,
             ngram_length,
             set_marker,
             in_parallel,

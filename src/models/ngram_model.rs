@@ -80,15 +80,17 @@ impl NGramModel {
 #[cfg(test)]
 mod test {
     use super::*;
-    use text_processing::{get_ngrams, get_total_list_of_ngrams};
+    use models::sigma::{get_ngrams, get_total_list_of_ngrams};
 
     #[test]
     fn test_ngram_model1() {
-        let sigma = "abc#".to_string();
+
+        let mut sigma: HashSet<u8> = (97..=99).into_iter().collect();
+        sigma.insert(35);   // add marker symbol to sigma
         let text = String::from("#aabcbaa#");
         let ngram_length: usize = 1;
         let ngrams = get_ngrams(&text[..], ngram_length);
-        let total_list_of_ngrams = get_total_list_of_ngrams(&sigma[..], ngram_length).unwrap();
+        let total_list_of_ngrams = get_total_list_of_ngrams(&sigma, ngram_length).unwrap();
         let mut ngram_model = NGramModel::from_ngrams(&total_list_of_ngrams).unwrap();
         ngram_model.add_ngrams(&ngrams).unwrap();
         assert_eq!(&4.0, ngram_model.get_ngram_count("a").unwrap());
@@ -99,11 +101,12 @@ mod test {
 
     #[test]
     fn test_ngram_model2() {
-        let sigma = "abc#".to_string();
+        let mut sigma: HashSet<u8> = (97..=99).into_iter().collect();
+        sigma.insert(35);   // add marker symbol to sigma
         let text = String::from("#aabcbaa#");
         let ngram_length: usize = 1;
         let ngrams = get_ngrams(&text[..], ngram_length);
-        let total_list_of_ngrams = get_total_list_of_ngrams(&sigma[..], ngram_length).unwrap();
+        let total_list_of_ngrams = get_total_list_of_ngrams(&sigma, ngram_length).unwrap();
         let mut ngram_model = NGramModel::from_ngrams(&total_list_of_ngrams).unwrap();
         ngram_model.add_ngrams(&ngrams).unwrap();
         assert_eq!(&4.0, ngram_model.get_ngram_count("a").unwrap());
@@ -114,11 +117,11 @@ mod test {
 
     #[test]
     fn test_ngram_model3() {
-        let sigma = "abc".to_string();
+        let sigma: HashSet<u8> = (97..=99).into_iter().collect();
         let text = String::from("aabcbaa");
         let ngram_length: usize = 2;
         let ngrams = get_ngrams(&text[..], ngram_length);
-        let total_list_of_ngrams = get_total_list_of_ngrams(&sigma[..], ngram_length).unwrap();
+        let total_list_of_ngrams = get_total_list_of_ngrams(&sigma, ngram_length).unwrap();
         let mut ngram_model = NGramModel::from_ngrams(&total_list_of_ngrams).unwrap();
         ngram_model.add_ngrams(&ngrams).unwrap();
         assert_eq!(&2.0, ngram_model.get_ngram_count("aa").unwrap());
@@ -133,11 +136,12 @@ mod test {
 
     #[test]
     fn test_ngram_model4() {
-        let sigma = "abc#".to_string();
+        let mut sigma: HashSet<u8> = (97..=99).into_iter().collect();
+        sigma.insert(35);   // add marker symbol to sigma
         let text = String::from("##aabcbaa##");
         let ngram_length: usize = 2;
         let ngrams = get_ngrams(&text[..], ngram_length);
-        let total_list_of_ngrams = get_total_list_of_ngrams(&sigma[..], ngram_length).unwrap();
+        let total_list_of_ngrams = get_total_list_of_ngrams(&sigma, ngram_length).unwrap();
         let mut ngram_model = NGramModel::from_ngrams(&total_list_of_ngrams).unwrap();
         ngram_model.add_ngrams(&ngrams).unwrap();
         assert_eq!(&2.0, ngram_model.get_ngram_count("aa").unwrap());
@@ -160,11 +164,11 @@ mod test {
 
     #[test]
     fn test_ngram_model5() {
-        let sigma = String::from("ab");
+        let sigma: HashSet<u8> = (97..=98).into_iter().collect();
         let text = String::from("aabbba");
         let ngram_length: usize = 2;
         let ngrams = get_ngrams(&text[..], ngram_length);
-        let total_list_of_ngrams = get_total_list_of_ngrams(&sigma[..], ngram_length).unwrap();
+        let total_list_of_ngrams = get_total_list_of_ngrams(&sigma, ngram_length).unwrap();
         let mut ngram_model = NGramModel::from_ngrams(&total_list_of_ngrams).unwrap();
         ngram_model.add_ngrams(&ngrams).unwrap();
         let count: f64 = ngram_model.get_total_ngram_count();
@@ -173,11 +177,11 @@ mod test {
 
     #[test]
     fn test_ngram_model6() {
-        let sigma = String::from("ab");
+        let sigma: HashSet<u8> = (97..=98).into_iter().collect();
         let text = String::from("aabbba");
         let ngram_length: usize = 2;
         let ngrams = get_ngrams(&text[..], ngram_length);
-        let total_list_of_ngrams = get_total_list_of_ngrams(&sigma[..], ngram_length).unwrap();
+        let total_list_of_ngrams = get_total_list_of_ngrams(&sigma, ngram_length).unwrap();
         let mut ngram_model = NGramModel::from_ngrams(&total_list_of_ngrams).unwrap();
         ngram_model.add_ngrams(&ngrams).unwrap();
         let count: usize = ngram_model.get_vocabulary_size();
@@ -186,11 +190,11 @@ mod test {
 
     #[test]
     fn test_ngram_model7() {
-        let sigma = String::from("ab");
+        let sigma: HashSet<u8> = (97..=98).into_iter().collect();
         let text = String::from("abbba");
         let ngram_length: usize = 2;
         let ngrams = get_ngrams(&text[..], ngram_length);
-        let total_list_of_ngrams = get_total_list_of_ngrams(&sigma[..], ngram_length).unwrap();
+        let total_list_of_ngrams = get_total_list_of_ngrams(&sigma, ngram_length).unwrap();
         let mut ngram_model = NGramModel::from_ngrams(&total_list_of_ngrams).unwrap();
         ngram_model.add_ngrams(&ngrams).unwrap();
         let count: usize = ngram_model.get_seen_type_count();
@@ -199,11 +203,11 @@ mod test {
 
     #[test]
     fn test_ngram_model8() {
-        let sigma = String::from("ab");
+        let sigma: HashSet<u8> = (97..=98).into_iter().collect();
         let text = String::from("abbba");
         let ngram_length: usize = 2;
         let ngrams = get_ngrams(&text[..], ngram_length);
-        let total_list_of_ngrams = get_total_list_of_ngrams(&sigma[..], ngram_length).unwrap();
+        let total_list_of_ngrams = get_total_list_of_ngrams(&sigma, ngram_length).unwrap();
         let mut ngram_model = NGramModel::from_ngrams(&total_list_of_ngrams).unwrap();
         ngram_model.add_ngrams(&ngrams).unwrap();
         let count: usize = ngram_model.get_unseen_type_count();

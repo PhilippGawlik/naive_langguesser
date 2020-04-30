@@ -41,15 +41,11 @@ pub enum Mode {
 ///
 /// * `config` - a struct holding config settings, partly given through cli
 pub fn model(config: config::ModelConfig) -> Result<(), ModellingError> {
-    let raw_text: String = fs::read_to_string(&config.filename)?;
-    let text_model = TextModel::from_raw(
-        &raw_text[..],
-        config.sigma_id,
-        config.set_marker,
-        config.ngram_length,
-    )?;
+    let mut text_model = TextModel::new(config.ngram_length, config.set_marker, &config.sigma)?;
     let mut count_model = CountModel::from_sigma(text_model.get_sigma(), config.ngram_length)?;
     let mut probability_model = ProbabilityModel::from_name(&config.modelname)?;
+    let raw_text: String = fs::read_to_string(&config.filename)?;
+    text_model.add(&raw_text[..]);
     count_model.count_ngrams_from_text_model(&text_model)?;
     count_model.smooth(&config.smoothing_type)?;
     probability_model.add_unigram_probabilities(&count_model)?;
@@ -64,15 +60,11 @@ pub fn model(config: config::ModelConfig) -> Result<(), ModellingError> {
 ///
 /// * `config` - a struct holding config settings, partly given through cli
 pub fn guess(config: config::GuessConfig) -> Result<(), GuessingError> {
-    let raw_unclassified = fs::read_to_string(&config.filename)?;
-    let text_model = TextModel::from_raw(
-        &raw_unclassified[..],
-        config.sigma_id,
-        config.set_marker,
-        config.ngram_length,
-    )?;
+    let mut text_model = TextModel::new(config.ngram_length, config.set_marker, &config.sigma)?;
     let inferer: Inferer =
         Inferer::from_models_dir(&config.model_dir, config.ngram_length, config.in_parallel)?;
+    let raw_unclassified = fs::read_to_string(&config.filename)?;
+    text_model.add(&raw_unclassified[..]);
     let prob_table = inferer.infer(&text_model)?;
     for (name, prob) in prob_table {
         println!("Guessing {} with : {}", name, prob);

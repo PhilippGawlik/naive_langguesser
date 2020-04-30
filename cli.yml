@@ -29,7 +29,7 @@ subcommands:
                 value_name: alphabet
                 required: true
                 takes_value: true
-                help: Specifies set of characters the language model is based on. Possible values {test, ascii, unicode}
+                help: Specifies set of characters the language model is based on. Possible values {alphanum, ascii}
             - n-gram-length:
                 short: l
                 long: n-gram-length
@@ -66,7 +66,7 @@ subcommands:
                 value_name: alphabet
                 required: true
                 takes_value: true
-                help: Specifies set of characters the language model is based on. Possible values {test, ascii, unicode}
+                help: Specifies set of characters the language model is based on. Possible values {alphanum, ascii}
             - n-gram-length:
                 short: l
                 long: n-gram-length

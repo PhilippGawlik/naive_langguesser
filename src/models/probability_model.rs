@@ -162,19 +162,20 @@ impl ProbabilityModel {
 mod test {
     use super::*;
     use smoothing::SmoothingType;
-    use text_processing::SigmaID;
+    use models::sigma::Sigma;
     use TextModel;
 
     #[test]
     fn test_probability_model1() {
-        let raw_text = String::from("aabcbaa\t");
         let ngram_length: usize = 1;
-        let set_marker: Option<&str> = None;
+        let set_marker: Option<u8> = None;
         let smoothing_type: SmoothingType = SmoothingType::NoSmoothing;
-        let text_model =
-            TextModel::from_raw(&raw_text[..], SigmaID::Test, set_marker, ngram_length).unwrap();
+        let mut text_model =
+            TextModel::new(ngram_length, set_marker, &Sigma::AlphaNum).unwrap();
         let mut count_model = CountModel::from_sigma(text_model.get_sigma(), ngram_length).unwrap();
         let mut probability_model = ProbabilityModel::from_name("test").unwrap();
+        let raw_text = String::from("aabcbaa\t");
+        text_model.add(&raw_text[..]);
         count_model
             .count_ngrams_from_text_model(&text_model)
             .unwrap();
@@ -187,14 +188,15 @@ mod test {
 
     #[test]
     fn test_probability_model2() {
-        let raw_text = String::from("aabcbaa\t");
         let ngram_length: usize = 1;
-        let set_marker: Option<&str> = Some("#");
+        let set_marker: Option<u8> = Some(35);
         let smoothing_type: SmoothingType = SmoothingType::NoSmoothing;
-        let text_model =
-            TextModel::from_raw(&raw_text[..], SigmaID::Test, set_marker, ngram_length).unwrap();
+        let mut text_model =
+            TextModel::new(ngram_length, set_marker, &Sigma::AlphaNum).unwrap();
         let mut count_model = CountModel::from_sigma(text_model.get_sigma(), ngram_length).unwrap();
         let mut probability_model = ProbabilityModel::from_name("test").unwrap();
+        let raw_text = String::from("aabcbaa\t");
+        text_model.add(&raw_text[..]);
         count_model
             .count_ngrams_from_text_model(&text_model)
             .unwrap();
@@ -209,12 +211,13 @@ mod test {
     fn test_probability_model3() {
         let raw_text = String::from("aabcbaa\t");
         let ngram_length: usize = 2;
-        let set_marker: Option<&str> = Some("#");
+        let set_marker: Option<u8> = Some(35);
         let smoothing_type: SmoothingType = SmoothingType::NoSmoothing;
-        let text_model =
-            TextModel::from_raw(&raw_text[..], SigmaID::Test, set_marker, ngram_length).unwrap();
+        let mut text_model =
+            TextModel::new(ngram_length, set_marker, &Sigma::AlphaNum).unwrap();
         let mut count_model = CountModel::from_sigma(text_model.get_sigma(), ngram_length).unwrap();
         let mut probability_model = ProbabilityModel::from_name("test").unwrap();
+        text_model.add(&raw_text[..]);
         count_model
             .count_ngrams_from_text_model(&text_model)
             .unwrap();

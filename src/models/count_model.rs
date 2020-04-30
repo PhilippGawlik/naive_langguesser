@@ -1,6 +1,6 @@
 use models::errors::CountModelError;
-use text_processing::get_total_list_of_ngrams;
 use models::ngram_model::NGramModel;
+use models::sigma::get_total_list_of_ngrams;
 use models::text_model::TextModel;
 use smoothing::{smoothing, SmoothingType};
 use std::collections::HashMap;
@@ -23,7 +23,7 @@ impl CountModel {
     ///
     /// `sigma` -  relevant alphabet for ngrams
     /// `max_ngram_length` - max length of ngrams
-    pub fn from_sigma(sigma: &str, max_ngram_length: usize) -> Result<CountModel, CountModelError> {
+    pub fn from_sigma(sigma: &HashSet<u8>, max_ngram_length: usize) -> Result<CountModel, CountModelError> {
         let mut ngram_models = HashMap::new();
         for ngram_length in 1..=max_ngram_length {
             let ngrams: HashSet<String> = match get_total_list_of_ngrams(sigma, ngram_length) {
@@ -115,7 +115,6 @@ impl CountModel {
     }
 }
 
-
 /// Tuple iterator for successive count models
 ///
 /// Example: (1-gram-counts, 2-grams-counts) or (2-grams-counts, 3-grams-counts)
@@ -146,16 +145,15 @@ impl<'a> Iterator for CountModelTupleIter<'a> {
     }
 }
 
-
 #[cfg(test)]
 mod test {
     use super::*;
 
     #[test]
     fn test_count_model1() {
-        let sigma = "abc".to_string();
+        let sigma: HashSet<u8> = (97..=99).into_iter().collect();
         let ngram_length: usize = 2;
-        let mut count_model = CountModel::from_sigma(&sigma[..], ngram_length).unwrap();
+        let mut count_model = CountModel::from_sigma(&sigma, ngram_length).unwrap();
         let ngram_model: &mut NGramModel = count_model.get_mut_ngram_model(ngram_length).unwrap();
         ngram_model.add_ngram("aa").unwrap();
         assert_eq!(&1.0, ngram_model.get_ngram_count("aa").unwrap());
@@ -163,9 +161,9 @@ mod test {
 
     #[test]
     fn test_count_model2() {
-        let sigma = "abc".to_string();
+        let sigma: HashSet<u8> = (97..=99).into_iter().collect();
         let ngram_length: usize = 2;
-        let mut count_model = CountModel::from_sigma(&sigma[..], ngram_length).unwrap();
+        let mut count_model = CountModel::from_sigma(&sigma, ngram_length).unwrap();
         let ngrams: Vec<String> = vec!["aa".to_string(), "aa".to_string(), "ab".to_string()];
         count_model.count_ngrams(&ngrams, ngram_length).unwrap();
         let ngram_model: &mut NGramModel = count_model.get_mut_ngram_model(ngram_length).unwrap();
