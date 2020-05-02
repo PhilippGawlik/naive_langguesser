@@ -1,6 +1,5 @@
 use itertools::Itertools; // cartesian_product
 use std::collections::HashSet;
-use std::sync::Arc;
 
 #[derive(Clone)]
 pub enum SigmaType {
@@ -12,8 +11,8 @@ pub enum SigmaType {
 #[derive(Clone)]
 pub struct Sigma {
     pub set_marker: Option<u8>,
+    pub type_: SigmaType,
     sigma: HashSet<u8>,
-    type_: SigmaType,
 }
 
 impl Sigma {
@@ -33,12 +32,14 @@ impl Sigma {
             SigmaType::Test => (97..=99).into_iter().collect(),
         };
         match set_marker {
-            Some(byte) => {
-                sigma.insert(byte)
-            },
-            None => false
+            Some(byte) => sigma.insert(byte),
+            None => false,
         };
-        Sigma {set_marker, sigma, type_}
+        Sigma {
+            set_marker,
+            sigma,
+            type_,
+        }
     }
 
     pub fn contains(&self, byte: &u8) -> Option<u8> {
@@ -48,11 +49,42 @@ impl Sigma {
         }
     }
 
-    pub fn as_bytes(&self) -> &HashSet<u8> {
+    pub fn as_bytes_ref(&self) -> &HashSet<u8> {
         &self.sigma
+    }
+
+    pub fn as_string(&self) -> HashSet<String> {
+        self.as_bytes_ref()
+            .iter()
+            .map(|b| (*b as char).to_string())
+            .collect::<HashSet<String>>()
     }
 }
 
+struct NGramGenerator {
+    unigrams: HashSet<String>,
+}
+
+impl NGramGenerator {
+    pub fn generate(&self, ngram_length: usize) -> HashSet<String> {
+        self.recursion(&self.unigrams, ngram_length - 1)
+    }
+
+    fn recursion(&self, ngrams: &HashSet<String>, index: usize) -> HashSet<String> {
+        match index {
+            0 => ngrams.clone(),
+            _ => {
+                let unigrams: &HashSet<String> = &self.unigrams;
+                let ext_ngrams: HashSet<String> = ngrams
+                    .iter()
+                    .cartesian_product(unigrams.iter())
+                    .map(|(ngram, unigram)| format!("{}{}", ngram, unigram))
+                    .collect::<HashSet<String>>();
+                self.recursion(&ext_ngrams, index - 1)
+            }
+        }
+    }
+}
 
 pub trait NGramExt {
     fn string_ngrams(&self, n: usize) -> HashSet<String>;
@@ -60,38 +92,11 @@ pub trait NGramExt {
 
 impl NGramExt for Sigma {
     fn string_ngrams(&self, ngram_length: usize) -> HashSet<String> {
-        match ngram_length {
-            1 => self
-                .as_bytes()
-                .iter()
-                .map(|b| (*b as char).to_string())
-                .collect::<HashSet<String>>(),
-            2 => {
-                let sigma_shared = Arc::new(self.as_bytes());
-                let shared1 = Arc::clone(&sigma_shared);
-                let shared2 = Arc::clone(&sigma_shared);
-                shared1
-                    .iter()
-                    .cartesian_product(shared2.iter())
-                    .map(|(a, b)| format!("{}{}", *a as char, *b as char))
-                    .collect::<HashSet<String>>()
-            }
-            3 => {
-                let sigma_shared = Arc::new(self.as_bytes());
-                let shared1 = Arc::clone(&sigma_shared);
-                let shared2 = Arc::clone(&sigma_shared);
-                let shared3 = Arc::clone(&sigma_shared);
-                shared1
-                    .iter()
-                    .cartesian_product(shared2.iter().cartesian_product(shared3.iter()))
-                    .map(|(a, (b, c))| format!("{}{}{}", *a as char, *b as char, *c as char))
-                    .collect::<HashSet<String>>()
-            }
-            _ => panic!(
-                "Trait NGramExt not implemented for length: {}",
-                ngram_length
-            ),
-        }
+        assert!(ngram_length > 0);
+        let generator = NGramGenerator {
+            unigrams: self.as_string(),
+        };
+        generator.generate(ngram_length)
     }
 }
 
