@@ -58,10 +58,17 @@ impl Sigma {
         &self.sigma
     }
 
-    pub fn as_string(&self) -> HashSet<String> {
+    pub fn as_set(&self) -> HashSet<String> {
         self.as_bytes_ref()
             .iter()
             .map(|b| (*b as char).to_string())
             .collect::<HashSet<String>>()
+    }
+
+    pub fn as_vec(&self) -> Vec<String> {
+        self.as_bytes_ref()
+            .iter()
+            .map(|b| (*b as char).to_string())
+            .collect::<Vec<String>>()
     }
 }

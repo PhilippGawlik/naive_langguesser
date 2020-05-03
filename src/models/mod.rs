@@ -8,28 +8,27 @@ pub mod text_model;
 use itertools::Itertools; // for cartesian_product
 use models::sigma::Sigma;
 use models::text_model::TextModel;
-use std::collections::HashSet;
 use ngram::NgramExt;
 
 struct NGramGenerator {
-    unigrams: HashSet<String>,
+    unigrams: Vec<String>,
 }
 
 impl NGramGenerator {
-    pub fn generate(&self, ngram_length: usize) -> HashSet<String> {
+    pub fn generate(&self, ngram_length: usize) -> Vec<String> {
         self.recursion(self.unigrams.clone(), ngram_length - 1)
     }
 
-    fn recursion(&self, ngrams: HashSet<String>, index: usize) -> HashSet<String> {
+    fn recursion(&self, ngrams: Vec<String>, index: usize) -> Vec<String> {
         match index {
             0 => ngrams,
             _ => {
-                let unigrams: &HashSet<String> = &self.unigrams;
-                let ext_ngrams: HashSet<String> = ngrams
+                let unigrams: &Vec<String> = &self.unigrams;
+                let ext_ngrams: Vec<String> = ngrams
                     .iter()
                     .cartesian_product(unigrams.iter())
                     .map(|(ngram, unigram)| format!("{}{}", ngram, unigram))
-                    .collect::<HashSet<String>>();
+                    .collect::<Vec<String>>();
                 self.recursion(ext_ngrams, index - 1)
             }
         }
@@ -37,18 +36,14 @@ impl NGramGenerator {
 }
 
 pub trait NGramExt {
-    fn string_ngrams(&self, n: usize) -> HashSet<String>;
-}
-
-pub trait NGramExtVec {
     fn string_ngrams(&self, n: usize) -> Vec<String>;
 }
 
 impl NGramExt for Sigma {
-    fn string_ngrams(&self, ngram_length: usize) -> HashSet<String> {
+    fn string_ngrams(&self, ngram_length: usize) -> Vec<String> {
         assert!(ngram_length > 0);
         let generator = NGramGenerator {
-            unigrams: self.as_string(),
+            unigrams: self.as_vec(),
         };
         generator.generate(ngram_length)
     }
@@ -60,7 +55,7 @@ pub fn get_ngrams(text: &str, n: usize) -> Vec<String> {
         .collect::<Vec<String>>()
 }
 
-impl NGramExtVec for TextModel {
+impl NGramExt for TextModel {
     fn string_ngrams(&self, ngram_length: usize) -> Vec<String> {
         let text: String = self.get_text();
         assert!(ngram_length > 0);
@@ -76,63 +71,69 @@ mod test {
     #[test]
     fn test_get_unigram_features() {
         let sigma: Sigma = Sigma::new(None, SigmaType::Test);
-        let ngrams = sigma.string_ngrams(1);
-        let mut result: HashSet<String> = HashSet::new();
-        result.insert(String::from("a"));
-        result.insert(String::from("b"));
-        result.insert(String::from("c"));
+        let mut ngrams = sigma.string_ngrams(1);
+        let mut result: Vec<String> = Vec::new();
+        result.push(String::from("a"));
+        result.push(String::from("b"));
+        result.push(String::from("c"));
+        ngrams.sort();
+        result.sort();
         assert_eq!(result, ngrams);
     }
 
     #[test]
     fn test_get_bigram_features() {
         let sigma: Sigma = Sigma::new(None, SigmaType::Test);
-        let ngrams = sigma.string_ngrams(2);
-        let mut result: HashSet<String> = HashSet::new();
-        result.insert(String::from("aa"));
-        result.insert(String::from("ab"));
-        result.insert(String::from("ac"));
-        result.insert(String::from("ba"));
-        result.insert(String::from("bb"));
-        result.insert(String::from("bc"));
-        result.insert(String::from("ca"));
-        result.insert(String::from("cb"));
-        result.insert(String::from("cc"));
+        let mut ngrams = sigma.string_ngrams(2);
+        let mut result: Vec<String> = Vec::new();
+        result.push(String::from("aa"));
+        result.push(String::from("ab"));
+        result.push(String::from("ac"));
+        result.push(String::from("ba"));
+        result.push(String::from("bb"));
+        result.push(String::from("bc"));
+        result.push(String::from("ca"));
+        result.push(String::from("cb"));
+        result.push(String::from("cc"));
+        ngrams.sort();
+        result.sort();
         assert_eq!(result, ngrams);
     }
 
     #[test]
     fn test_get_threegram_features() {
         let sigma: Sigma = Sigma::new(None, SigmaType::Test);
-        let ngrams = sigma.string_ngrams(3);
-        let mut result: HashSet<String> = HashSet::new();
-        result.insert(String::from("cbc"));
-        result.insert(String::from("bcc"));
-        result.insert(String::from("bbc"));
-        result.insert(String::from("bba"));
-        result.insert(String::from("aab"));
-        result.insert(String::from("acc"));
-        result.insert(String::from("bbb"));
-        result.insert(String::from("bab"));
-        result.insert(String::from("abb"));
-        result.insert(String::from("aca"));
-        result.insert(String::from("baa"));
-        result.insert(String::from("aaa"));
-        result.insert(String::from("ccc"));
-        result.insert(String::from("cca"));
-        result.insert(String::from("cba"));
-        result.insert(String::from("ccb"));
-        result.insert(String::from("aba"));
-        result.insert(String::from("bcb"));
-        result.insert(String::from("abc"));
-        result.insert(String::from("aac"));
-        result.insert(String::from("cac"));
-        result.insert(String::from("cbb"));
-        result.insert(String::from("caa"));
-        result.insert(String::from("bca"));
-        result.insert(String::from("cab"));
-        result.insert(String::from("bac"));
-        result.insert(String::from("acb"));
+        let mut ngrams = sigma.string_ngrams(3);
+        let mut result: Vec<String> = Vec::new();
+        result.push(String::from("aaa"));
+        result.push(String::from("aab"));
+        result.push(String::from("aac"));
+        result.push(String::from("cbc"));
+        result.push(String::from("bcc"));
+        result.push(String::from("bbc"));
+        result.push(String::from("bba"));
+        result.push(String::from("acc"));
+        result.push(String::from("bbb"));
+        result.push(String::from("bab"));
+        result.push(String::from("abb"));
+        result.push(String::from("aca"));
+        result.push(String::from("baa"));
+        result.push(String::from("ccc"));
+        result.push(String::from("cca"));
+        result.push(String::from("cba"));
+        result.push(String::from("ccb"));
+        result.push(String::from("aba"));
+        result.push(String::from("bcb"));
+        result.push(String::from("abc"));
+        result.push(String::from("cac"));
+        result.push(String::from("cbb"));
+        result.push(String::from("caa"));
+        result.push(String::from("bca"));
+        result.push(String::from("cab"));
+        result.push(String::from("bac"));
+        result.push(String::from("acb"));
+        ngrams.sort();
+        result.sort();
         assert_eq!(result, ngrams);
     }
 }

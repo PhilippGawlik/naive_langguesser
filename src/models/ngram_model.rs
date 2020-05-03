@@ -1,6 +1,5 @@
 use models::errors::NGramModelError;
 use std::collections::HashMap;
-use std::collections::HashSet;
 
 /// Hold mapping of ngrams to the related occurency counts
 ///
@@ -14,7 +13,7 @@ pub struct NGramModel {
 }
 
 impl NGramModel {
-    pub fn from_ngrams(ngrams: &HashSet<String>) -> Result<NGramModel, NGramModelError> {
+    pub fn from_ngrams(ngrams: &Vec<String>) -> Result<NGramModel, NGramModelError> {
         let model: HashMap<String, f64> = ngrams
             .into_iter()
             .map(move |ngram| (ngram.clone(), 0.0))
@@ -79,7 +78,6 @@ impl NGramModel {
 mod test {
     use super::*;
     use models::NGramExt;
-    use models::NGramExtVec;
     use models::TextModel;
     use models::sigma::{Sigma, SigmaType};
 

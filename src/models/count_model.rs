@@ -3,8 +3,7 @@ use models::ngram_model::NGramModel;
 use models::text_model::TextModel;
 use smoothing::{smoothing, SmoothingType};
 use std::collections::HashMap;
-use std::collections::HashSet;
-use models::{NGramExt, NGramExtVec};
+use models::NGramExt;
 use models::sigma::Sigma;
 
 /// Hold ngram occurence models of various length
@@ -27,7 +26,7 @@ impl CountModel {
     pub fn from_sigma(sigma: &Sigma, max_ngram_length: usize) -> Result<CountModel, CountModelError> {
         let mut ngram_models = HashMap::new();
         for ngram_length in 1..=max_ngram_length {
-            let ngrams: HashSet<String> = sigma.string_ngrams(ngram_length);
+            let ngrams: Vec<String> = sigma.string_ngrams(ngram_length);
             let ngram_model = NGramModel::from_ngrams(&ngrams)?;
             ngram_models.insert(ngram_length, ngram_model);
         }

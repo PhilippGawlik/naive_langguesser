@@ -1,7 +1,7 @@
 use inferer::errors::InfererError;
 use models::probability_model::ProbabilityModel;
 use models::text_model::TextModel;
-use models::NGramExtVec;
+use models::NGramExt;
 use std::sync::mpsc::{channel, Receiver, Sender};
 use std::sync::Arc;
 use std::thread;
