@@ -78,7 +78,8 @@ impl NGramModel {
 #[cfg(test)]
 mod test {
     use super::*;
-    use models::sigma::{NGramExt, Sigma, SigmaType};
+    use models::NGramExt;
+    use models::sigma::{Sigma, SigmaType};
     use models::text_model::get_ngrams;
 
     #[test]

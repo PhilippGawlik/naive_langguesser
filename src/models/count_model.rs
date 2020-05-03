@@ -4,7 +4,8 @@ use models::text_model::TextModel;
 use smoothing::{smoothing, SmoothingType};
 use std::collections::HashMap;
 use std::collections::HashSet;
-use models::sigma::{Sigma, NGramExt};
+use models::NGramExt;
+use models::sigma::Sigma;
 
 /// Hold ngram occurence models of various length
 pub struct CountModel {
