@@ -1,4 +1,4 @@
-use itertools::Itertools; // cartesian_product
+use itertools::Itertools; // for cartesian_product
 use std::collections::HashSet;
 
 #[derive(Clone)]
@@ -8,16 +8,9 @@ pub enum SigmaType {
     Test,
 }
 
-#[derive(Clone)]
-pub struct Sigma {
-    pub set_marker: Option<u8>,
-    pub type_: SigmaType,
-    sigma: HashSet<u8>,
-}
-
-impl Sigma {
-    pub fn new(set_marker: Option<u8>, type_: SigmaType) -> Sigma {
-        let mut sigma: HashSet<u8> = match type_ {
+impl SigmaType {
+    pub fn as_bytes(&self) -> HashSet<u8> {
+        match self {
             SigmaType::AlphaNum => {
                 let numbers: HashSet<u8> = (48..=57).into_iter().collect();
                 let capitals: HashSet<u8> = (65..=90).into_iter().collect();
@@ -30,7 +23,20 @@ impl Sigma {
             }
             SigmaType::Ascii => (0..=127).into_iter().collect(),
             SigmaType::Test => (97..=99).into_iter().collect(),
-        };
+        }
+    }
+}
+
+#[derive(Clone)]
+pub struct Sigma {
+    pub set_marker: Option<u8>,
+    pub type_: SigmaType,
+    sigma: HashSet<u8>,
+}
+
+impl Sigma {
+    pub fn new(set_marker: Option<u8>, type_: SigmaType) -> Sigma {
+        let mut sigma: HashSet<u8> = type_.as_bytes();
         match set_marker {
             Some(byte) => sigma.insert(byte),
             None => false,
