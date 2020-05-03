@@ -5,10 +5,11 @@ pub mod probability_model;
 pub mod sigma;
 pub mod text_model;
 
-use std::collections::HashSet;
 use itertools::Itertools; // for cartesian_product
 use models::sigma::Sigma;
-
+use models::text_model::TextModel;
+use std::collections::HashSet;
+use ngram::NgramExt;
 
 struct NGramGenerator {
     unigrams: HashSet<String>,
@@ -35,9 +36,12 @@ impl NGramGenerator {
     }
 }
 
-
 pub trait NGramExt {
     fn string_ngrams(&self, n: usize) -> HashSet<String>;
+}
+
+pub trait NGramExtVec {
+    fn string_ngrams(&self, n: usize) -> Vec<String>;
 }
 
 impl NGramExt for Sigma {
@@ -50,12 +54,24 @@ impl NGramExt for Sigma {
     }
 }
 
+pub fn get_ngrams(text: &str, n: usize) -> Vec<String> {
+    text.char_ngrams(n)
+        .map(|c| c.to_string())
+        .collect::<Vec<String>>()
+}
+
+impl NGramExtVec for TextModel {
+    fn string_ngrams(&self, ngram_length: usize) -> Vec<String> {
+        let text: String = self.get_text();
+        assert!(ngram_length > 0);
+        get_ngrams(&text[..], ngram_length)
+    }
+}
 
 #[cfg(test)]
 mod test {
     use super::*;
     use models::sigma::SigmaType;
-
 
     #[test]
     fn test_get_unigram_features() {

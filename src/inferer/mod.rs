@@ -1,6 +1,7 @@
 use inferer::errors::InfererError;
 use models::probability_model::ProbabilityModel;
 use models::text_model::TextModel;
+use models::NGramExtVec;
 use std::sync::mpsc::{channel, Receiver, Sender};
 use std::sync::Arc;
 use std::thread;
@@ -61,7 +62,7 @@ impl Inferer {
 
     /// Infer most likely language for given text
     pub fn infer(self, unclassified: &TextModel) -> Result<Vec<(String, f64)>, InfererError> {
-        let ngrams: Vec<String> = unclassified.get_ngrams(self.ngram_length);
+        let ngrams: Vec<String> = unclassified.string_ngrams(self.ngram_length);
         let mut prob_table: Vec<(String, f64)> = match self.in_parallel {
             true => self.parallel_infer(ngrams)?,
             false => self.successive_infer(&ngrams)?,

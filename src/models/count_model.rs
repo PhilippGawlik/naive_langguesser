@@ -4,7 +4,7 @@ use models::text_model::TextModel;
 use smoothing::{smoothing, SmoothingType};
 use std::collections::HashMap;
 use std::collections::HashSet;
-use models::NGramExt;
+use models::{NGramExt, NGramExtVec};
 use models::sigma::Sigma;
 
 /// Hold ngram occurence models of various length
@@ -50,7 +50,7 @@ impl CountModel {
         text_model: &TextModel,
     ) -> Result<(), CountModelError> {
         for idx in 1..=self.max_ngram_length {
-            let ngrams: Vec<String> = text_model.get_ngrams(idx);
+            let ngrams: Vec<String> = text_model.string_ngrams(idx);
             self.count_ngrams(&ngrams, idx)?;
         }
         Ok(())

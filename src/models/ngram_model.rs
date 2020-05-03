@@ -79,16 +79,19 @@ impl NGramModel {
 mod test {
     use super::*;
     use models::NGramExt;
+    use models::NGramExtVec;
+    use models::TextModel;
     use models::sigma::{Sigma, SigmaType};
-    use models::text_model::get_ngrams;
 
     #[test]
     fn test_ngram_model1() {
         let set_marker: Option<u8> = Some(35);
         let sigma: Sigma = Sigma::new(set_marker, SigmaType::Test);
-        let text = String::from("#aabcbaa#");
+        let text = String::from("aabcbaa");
         let ngram_length: usize = 1;
-        let ngrams = get_ngrams(&text[..], ngram_length);
+        let mut text_model = TextModel::new(ngram_length, &sigma).unwrap();
+        text_model.add(&text[..]);
+        let ngrams = text_model.string_ngrams(ngram_length);
         let mut ngram_model = NGramModel::from_ngrams(&sigma.string_ngrams(ngram_length)).unwrap();
         ngram_model.add_ngrams(&ngrams).unwrap();
         assert_eq!(&4.0, ngram_model.get_ngram_count("a").unwrap());
@@ -101,9 +104,11 @@ mod test {
     fn test_ngram_model2() {
         let set_marker: Option<u8> = Some(35);
         let sigma: Sigma = Sigma::new(set_marker, SigmaType::Test);
-        let text = String::from("#aabcbaa#");
         let ngram_length: usize = 1;
-        let ngrams = get_ngrams(&text[..], ngram_length);
+        let text = String::from("aabcbaa");
+        let mut text_model = TextModel::new(ngram_length, &sigma).unwrap();
+        text_model.add(&text[..]);
+        let ngrams = text_model.string_ngrams(ngram_length);
         let mut ngram_model = NGramModel::from_ngrams(&sigma.string_ngrams(ngram_length)).unwrap();
         ngram_model.add_ngrams(&ngrams).unwrap();
         assert_eq!(&4.0, ngram_model.get_ngram_count("a").unwrap());
@@ -118,7 +123,9 @@ mod test {
         let sigma: Sigma = Sigma::new(set_marker, SigmaType::Test);
         let text = String::from("aabcbaa");
         let ngram_length: usize = 2;
-        let ngrams = get_ngrams(&text[..], ngram_length);
+        let mut text_model = TextModel::new(ngram_length, &sigma).unwrap();
+        text_model.add(&text[..]);
+        let ngrams = text_model.string_ngrams(ngram_length);
         let mut ngram_model = NGramModel::from_ngrams(&sigma.string_ngrams(ngram_length)).unwrap();
         ngram_model.add_ngrams(&ngrams).unwrap();
         assert_eq!(&2.0, ngram_model.get_ngram_count("aa").unwrap());
@@ -135,9 +142,11 @@ mod test {
     fn test_ngram_model4() {
         let set_marker: Option<u8> = Some(35);
         let sigma: Sigma = Sigma::new(set_marker, SigmaType::Test);
-        let text = String::from("##aabcbaa##");
+        let text = String::from("aabcbaa");
         let ngram_length: usize = 2;
-        let ngrams = get_ngrams(&text[..], ngram_length);
+        let mut text_model = TextModel::new(ngram_length, &sigma).unwrap();
+        text_model.add(&text[..]);
+        let ngrams = text_model.string_ngrams(ngram_length);
         let mut ngram_model = NGramModel::from_ngrams(&sigma.string_ngrams(ngram_length)).unwrap();
         ngram_model.add_ngrams(&ngrams).unwrap();
         assert_eq!(&2.0, ngram_model.get_ngram_count("aa").unwrap());
@@ -164,7 +173,9 @@ mod test {
         let sigma: Sigma = Sigma::new(set_marker, SigmaType::Test);
         let text = String::from("aabbba");
         let ngram_length: usize = 2;
-        let ngrams = get_ngrams(&text[..], ngram_length);
+        let mut text_model = TextModel::new(ngram_length, &sigma).unwrap();
+        text_model.add(&text[..]);
+        let ngrams = text_model.string_ngrams(ngram_length);
         let mut ngram_model = NGramModel::from_ngrams(&sigma.string_ngrams(ngram_length)).unwrap();
         ngram_model.add_ngrams(&ngrams).unwrap();
         let count: f64 = ngram_model.get_total_ngram_count();
@@ -177,7 +188,9 @@ mod test {
         let sigma: Sigma = Sigma::new(set_marker, SigmaType::Test);
         let text = String::from("aabbbac");
         let ngram_length: usize = 2;
-        let ngrams = get_ngrams(&text[..], ngram_length);
+        let mut text_model = TextModel::new(ngram_length, &sigma).unwrap();
+        text_model.add(&text[..]);
+        let ngrams = text_model.string_ngrams(ngram_length);
         let mut ngram_model = NGramModel::from_ngrams(&sigma.string_ngrams(ngram_length)).unwrap();
         ngram_model.add_ngrams(&ngrams).unwrap();
         let count: usize = ngram_model.get_vocabulary_size();
@@ -190,7 +203,9 @@ mod test {
         let sigma: Sigma = Sigma::new(set_marker, SigmaType::Test);
         let text = String::from("abbba");
         let ngram_length: usize = 2;
-        let ngrams = get_ngrams(&text[..], ngram_length);
+        let mut text_model = TextModel::new(ngram_length, &sigma).unwrap();
+        text_model.add(&text[..]);
+        let ngrams = text_model.string_ngrams(ngram_length);
         let mut ngram_model = NGramModel::from_ngrams(&sigma.string_ngrams(ngram_length)).unwrap();
         ngram_model.add_ngrams(&ngrams).unwrap();
         let count: usize = ngram_model.get_seen_type_count();
@@ -203,7 +218,9 @@ mod test {
         let sigma: Sigma = Sigma::new(set_marker, SigmaType::Test);
         let text = String::from("abbba");
         let ngram_length: usize = 2;
-        let ngrams = get_ngrams(&text[..], ngram_length);
+        let mut text_model = TextModel::new(ngram_length, &sigma).unwrap();
+        text_model.add(&text[..]);
+        let ngrams = text_model.string_ngrams(ngram_length);
         let mut ngram_model = NGramModel::from_ngrams(&sigma.string_ngrams(ngram_length)).unwrap();
         ngram_model.add_ngrams(&ngrams).unwrap();
         let count: usize = ngram_model.get_unseen_type_count();

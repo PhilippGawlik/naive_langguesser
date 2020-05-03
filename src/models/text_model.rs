@@ -1,13 +1,6 @@
 use models::sigma::Sigma;
 use text_processing::errors::TextError;
 use std::str;
-use ngram::NgramExt;
-
-pub fn get_ngrams(text: &str, n: usize) -> Vec<String> {
-    text.char_ngrams(n)
-        .map(|c| c.to_string())
-        .collect::<Vec<String>>()
-}
 
 pub struct TextModel {
     set_confix: Option<String>,
@@ -62,19 +55,6 @@ impl TextModel {
         match &self.set_confix {
             Some(confix) => format!("{}{}{}", confix.clone(), text, confix),
             None => text,
-        }
-    }
-
-    pub fn get_ngrams(&self, ngram_length: usize) -> Vec<String> {
-        let text: String = self.get_text();
-        match ngram_length {
-            1 => get_ngrams(&text[..], 1),
-            2 => get_ngrams(&text[..], 2),
-            3 => get_ngrams(&text[..], 3),
-            _ => panic!(
-                "NGram generator for length {} not implemented",
-                ngram_length
-            ),
         }
     }
 }
