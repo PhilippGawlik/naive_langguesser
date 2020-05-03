@@ -67,12 +67,12 @@ struct NGramGenerator {
 
 impl NGramGenerator {
     pub fn generate(&self, ngram_length: usize) -> HashSet<String> {
-        self.recursion(&self.unigrams, ngram_length - 1)
+        self.recursion(self.unigrams.clone(), ngram_length - 1)
     }
 
-    fn recursion(&self, ngrams: &HashSet<String>, index: usize) -> HashSet<String> {
+    fn recursion(&self, ngrams: HashSet<String>, index: usize) -> HashSet<String> {
         match index {
-            0 => ngrams.clone(),
+            0 => ngrams,
             _ => {
                 let unigrams: &HashSet<String> = &self.unigrams;
                 let ext_ngrams: HashSet<String> = ngrams
@@ -80,7 +80,7 @@ impl NGramGenerator {
                     .cartesian_product(unigrams.iter())
                     .map(|(ngram, unigram)| format!("{}{}", ngram, unigram))
                     .collect::<HashSet<String>>();
-                self.recursion(&ext_ngrams, index - 1)
+                self.recursion(ext_ngrams, index - 1)
             }
         }
     }
