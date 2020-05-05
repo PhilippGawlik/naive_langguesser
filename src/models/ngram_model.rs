@@ -1,5 +1,31 @@
+use itertools::Itertools;
 use models::errors::NGramModelError;
-use std::collections::HashMap;
+use std::collections::HashMap; // for cartesian_product
+
+pub struct NGramGenerator {
+    pub unigrams: Vec<String>,
+}
+
+impl NGramGenerator {
+    pub fn generate(&self, ngram_length: usize) -> Vec<String> {
+        self.recursion(self.unigrams.clone(), ngram_length - 1)
+    }
+
+    fn recursion(&self, ngrams: Vec<String>, index: usize) -> Vec<String> {
+        match index {
+            0 => ngrams,
+            _ => {
+                let unigrams: &Vec<String> = &self.unigrams;
+                let ext_ngrams: Vec<String> = ngrams
+                    .iter()
+                    .cartesian_product(unigrams.iter())
+                    .map(|(ngram, unigram)| format!("{}{}", ngram, unigram))
+                    .collect::<Vec<String>>();
+                self.recursion(ext_ngrams, index - 1)
+            }
+        }
+    }
+}
 
 /// Hold mapping of ngrams to the related occurency counts
 ///
@@ -77,9 +103,9 @@ impl NGramModel {
 #[cfg(test)]
 mod test {
     use super::*;
+    use models::sigma::{Sigma, SigmaType};
     use models::NGramExt;
     use models::TextModel;
-    use models::sigma::{Sigma, SigmaType};
 
     #[test]
     fn test_ngram_model1() {

@@ -5,35 +5,10 @@ pub mod probability_model;
 pub mod sigma;
 pub mod text_model;
 
-use itertools::Itertools; // for cartesian_product
+use models::ngram_model::NGramGenerator;
 use models::sigma::Sigma;
 use models::text_model::TextModel;
 use ngram::NgramExt;
-
-struct NGramGenerator {
-    unigrams: Vec<String>,
-}
-
-impl NGramGenerator {
-    pub fn generate(&self, ngram_length: usize) -> Vec<String> {
-        self.recursion(self.unigrams.clone(), ngram_length - 1)
-    }
-
-    fn recursion(&self, ngrams: Vec<String>, index: usize) -> Vec<String> {
-        match index {
-            0 => ngrams,
-            _ => {
-                let unigrams: &Vec<String> = &self.unigrams;
-                let ext_ngrams: Vec<String> = ngrams
-                    .iter()
-                    .cartesian_product(unigrams.iter())
-                    .map(|(ngram, unigram)| format!("{}{}", ngram, unigram))
-                    .collect::<Vec<String>>();
-                self.recursion(ext_ngrams, index - 1)
-            }
-        }
-    }
-}
 
 pub trait NGramExt {
     fn string_ngrams(&self, n: usize) -> Vec<String>;
@@ -49,17 +24,20 @@ impl NGramExt for Sigma {
     }
 }
 
-pub fn get_ngrams(text: &str, n: usize) -> Vec<String> {
-    text.char_ngrams(n)
-        .map(|c| c.to_string())
-        .collect::<Vec<String>>()
+impl NGramExt for String {
+    fn string_ngrams(&self, ngram_length: usize) -> Vec<String> {
+        assert!(ngram_length > 0);
+        self.char_ngrams(ngram_length)
+            .map(|c| c.to_string())
+            .collect::<Vec<String>>()
+    }
 }
 
 impl NGramExt for TextModel {
     fn string_ngrams(&self, ngram_length: usize) -> Vec<String> {
-        let text: String = self.get_text();
         assert!(ngram_length > 0);
-        get_ngrams(&text[..], ngram_length)
+        let text: String = self.get_text();
+        text.string_ngrams(ngram_length)
     }
 }
 
