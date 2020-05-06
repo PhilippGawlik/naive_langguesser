@@ -1,10 +1,10 @@
 use models::errors::CountModelError;
 use models::ngram_model::NGramModel;
+use models::sigma::Sigma;
 use models::text_model::TextModel;
+use models::NGramExt;
 use smoothing::{smoothing, SmoothingType};
 use std::collections::HashMap;
-use models::NGramExt;
-use models::sigma::Sigma;
 
 /// Hold ngram occurence models of various length
 pub struct CountModel {
@@ -23,7 +23,10 @@ impl CountModel {
     ///
     /// `sigma` -  relevant alphabet for ngrams
     /// `max_ngram_length` - max length of ngrams
-    pub fn from_sigma(sigma: &Sigma, max_ngram_length: usize) -> Result<CountModel, CountModelError> {
+    pub fn from_sigma(
+        sigma: &Sigma,
+        max_ngram_length: usize,
+    ) -> Result<CountModel, CountModelError> {
         let mut ngram_models = HashMap::new();
         for ngram_length in 1..=max_ngram_length {
             let ngrams: Vec<String> = sigma.string_ngrams(ngram_length);
@@ -49,7 +52,7 @@ impl CountModel {
         text_model: &TextModel,
     ) -> Result<(), CountModelError> {
         for idx in 1..=self.max_ngram_length {
-            let ngrams: Vec<String> = text_model.string_ngrams(idx);
+            let ngrams: Vec<String> = text_model.iter_ngrams(idx).collect::<Vec<String>>();
             self.count_ngrams(&ngrams, idx)?;
         }
         Ok(())

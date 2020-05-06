@@ -105,7 +105,7 @@ mod test {
     use super::*;
     use models::sigma::{Sigma, SigmaType};
     use models::NGramExt;
-    use models::TextModel;
+    use models::text_model::TextModel;
 
     #[test]
     fn test_ngram_model1() {
@@ -115,7 +115,7 @@ mod test {
         let ngram_length: usize = 1;
         let mut text_model = TextModel::new(ngram_length, &sigma).unwrap();
         text_model.add(&text[..]);
-        let ngrams = text_model.string_ngrams(ngram_length);
+        let ngrams = text_model.iter_ngrams(ngram_length).collect::<Vec<String>>();
         let mut ngram_model = NGramModel::from_ngrams(&sigma.string_ngrams(ngram_length)).unwrap();
         ngram_model.add_ngrams(&ngrams).unwrap();
         assert_eq!(&4.0, ngram_model.get_ngram_count("a").unwrap());
@@ -132,7 +132,7 @@ mod test {
         let text = String::from("aabcbaa");
         let mut text_model = TextModel::new(ngram_length, &sigma).unwrap();
         text_model.add(&text[..]);
-        let ngrams = text_model.string_ngrams(ngram_length);
+        let ngrams = text_model.iter_ngrams(ngram_length).collect::<Vec<String>>();
         let mut ngram_model = NGramModel::from_ngrams(&sigma.string_ngrams(ngram_length)).unwrap();
         ngram_model.add_ngrams(&ngrams).unwrap();
         assert_eq!(&4.0, ngram_model.get_ngram_count("a").unwrap());
@@ -149,7 +149,7 @@ mod test {
         let ngram_length: usize = 2;
         let mut text_model = TextModel::new(ngram_length, &sigma).unwrap();
         text_model.add(&text[..]);
-        let ngrams = text_model.string_ngrams(ngram_length);
+        let ngrams = text_model.iter_ngrams(ngram_length).collect::<Vec<String>>();
         let mut ngram_model = NGramModel::from_ngrams(&sigma.string_ngrams(ngram_length)).unwrap();
         ngram_model.add_ngrams(&ngrams).unwrap();
         assert_eq!(&2.0, ngram_model.get_ngram_count("aa").unwrap());
@@ -170,7 +170,7 @@ mod test {
         let ngram_length: usize = 2;
         let mut text_model = TextModel::new(ngram_length, &sigma).unwrap();
         text_model.add(&text[..]);
-        let ngrams = text_model.string_ngrams(ngram_length);
+        let ngrams = text_model.iter_ngrams(ngram_length).collect::<Vec<String>>();
         let mut ngram_model = NGramModel::from_ngrams(&sigma.string_ngrams(ngram_length)).unwrap();
         ngram_model.add_ngrams(&ngrams).unwrap();
         assert_eq!(&2.0, ngram_model.get_ngram_count("aa").unwrap());
@@ -199,7 +199,7 @@ mod test {
         let ngram_length: usize = 2;
         let mut text_model = TextModel::new(ngram_length, &sigma).unwrap();
         text_model.add(&text[..]);
-        let ngrams = text_model.string_ngrams(ngram_length);
+        let ngrams = text_model.iter_ngrams(ngram_length).collect::<Vec<String>>();
         let mut ngram_model = NGramModel::from_ngrams(&sigma.string_ngrams(ngram_length)).unwrap();
         ngram_model.add_ngrams(&ngrams).unwrap();
         let count: f64 = ngram_model.get_total_ngram_count();
@@ -214,7 +214,7 @@ mod test {
         let ngram_length: usize = 2;
         let mut text_model = TextModel::new(ngram_length, &sigma).unwrap();
         text_model.add(&text[..]);
-        let ngrams = text_model.string_ngrams(ngram_length);
+        let ngrams = text_model.iter_ngrams(ngram_length).collect::<Vec<String>>();
         let mut ngram_model = NGramModel::from_ngrams(&sigma.string_ngrams(ngram_length)).unwrap();
         ngram_model.add_ngrams(&ngrams).unwrap();
         let count: usize = ngram_model.get_vocabulary_size();
@@ -229,7 +229,7 @@ mod test {
         let ngram_length: usize = 2;
         let mut text_model = TextModel::new(ngram_length, &sigma).unwrap();
         text_model.add(&text[..]);
-        let ngrams = text_model.string_ngrams(ngram_length);
+        let ngrams = text_model.iter_ngrams(ngram_length).collect::<Vec<String>>();
         let mut ngram_model = NGramModel::from_ngrams(&sigma.string_ngrams(ngram_length)).unwrap();
         ngram_model.add_ngrams(&ngrams).unwrap();
         let count: usize = ngram_model.get_seen_type_count();
@@ -244,7 +244,7 @@ mod test {
         let ngram_length: usize = 2;
         let mut text_model = TextModel::new(ngram_length, &sigma).unwrap();
         text_model.add(&text[..]);
-        let ngrams = text_model.string_ngrams(ngram_length);
+        let ngrams = text_model.iter_ngrams(ngram_length).collect::<Vec<String>>();
         let mut ngram_model = NGramModel::from_ngrams(&sigma.string_ngrams(ngram_length)).unwrap();
         ngram_model.add_ngrams(&ngrams).unwrap();
         let count: usize = ngram_model.get_unseen_type_count();
