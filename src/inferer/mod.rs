@@ -61,7 +61,7 @@ impl Inferer {
 
     /// Infer most likely language for given text
     pub fn infer(self, unclassified: &TextModel) -> Result<Vec<(String, f64)>, InfererError> {
-        let ngrams: Vec<String> = unclassified.iter_ngrams(self.ngram_length).collect::<Vec<String>>();
+        let ngrams: Vec<String> = unclassified.ngram_iter(self.ngram_length).collect::<Vec<String>>();
         let mut prob_table: Vec<(String, f64)> = match self.in_parallel {
             true => self.parallel_infer(ngrams)?,
             false => self.successive_infer(&ngrams)?,

@@ -45,7 +45,7 @@ pub fn model(config: config::ModelConfig) -> Result<(), ModellingError> {
     let mut count_model = CountModel::from_sigma(&config.sigma, config.ngram_length)?;
     let mut probability_model = ProbabilityModel::from_name(&config.modelname)?;
     let raw_text: String = fs::read_to_string(&config.filename)?;
-    text_model.add(&raw_text[..]);
+    text_model.extend(&raw_text[..]);
     count_model.count_ngrams_from_text_model(&text_model)?;
     count_model.smooth(&config.smoothing_type)?;
     probability_model.add_unigram_probabilities(&count_model)?;
@@ -64,7 +64,7 @@ pub fn guess(config: config::GuessConfig) -> Result<(), GuessingError> {
     let inferer: Inferer =
         Inferer::from_models_dir(&config.model_dir, config.ngram_length, config.in_parallel)?;
     let raw_unclassified = fs::read_to_string(&config.filename)?;
-    text_model.add(&raw_unclassified[..]);
+    text_model.extend(&raw_unclassified[..]);
     let prob_table = inferer.infer(&text_model)?;
     for (name, prob) in prob_table {
         println!("Guessing {} with : {}", name, prob);

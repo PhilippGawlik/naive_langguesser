@@ -1,8 +1,7 @@
 use models::errors::CountModelError;
 use models::ngram_model::NGramModel;
-use models::sigma::Sigma;
+use models::sigma::{Sigma, NGramExt};
 use models::text_model::TextModel;
-use models::NGramExt;
 use smoothing::{smoothing, SmoothingType};
 use std::collections::HashMap;
 
@@ -29,7 +28,7 @@ impl CountModel {
     ) -> Result<CountModel, CountModelError> {
         let mut ngram_models = HashMap::new();
         for ngram_length in 1..=max_ngram_length {
-            let ngrams: Vec<String> = sigma.string_ngrams(ngram_length);
+            let ngrams: Vec<String> = sigma.ngrams(ngram_length);
             let ngram_model = NGramModel::from_ngrams(&ngrams)?;
             ngram_models.insert(ngram_length, ngram_model);
         }
@@ -52,7 +51,7 @@ impl CountModel {
         text_model: &TextModel,
     ) -> Result<(), CountModelError> {
         for idx in 1..=self.max_ngram_length {
-            let ngrams: Vec<String> = text_model.iter_ngrams(idx).collect::<Vec<String>>();
+            let ngrams: Vec<String> = text_model.ngram_iter(idx).collect::<Vec<String>>();
             self.count_ngrams(&ngrams, idx)?;
         }
         Ok(())

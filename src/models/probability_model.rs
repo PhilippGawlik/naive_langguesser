@@ -175,7 +175,7 @@ mod test {
         let mut count_model = CountModel::from_sigma(&sigma, ngram_length).unwrap();
         let mut probability_model = ProbabilityModel::from_name("test").unwrap();
         let raw_text = String::from("aabcbaa\t");
-        text_model.add(&raw_text[..]);
+        text_model.extend(&raw_text[..]);
         count_model
             .count_ngrams_from_text_model(&text_model)
             .unwrap();
@@ -197,7 +197,7 @@ mod test {
         let mut count_model = CountModel::from_sigma(&sigma, ngram_length).unwrap();
         let mut probability_model = ProbabilityModel::from_name("test").unwrap();
         let raw_text = String::from("aabcbaa\t");
-        text_model.add(&raw_text[..]);
+        text_model.extend(&raw_text[..]);
         count_model
             .count_ngrams_from_text_model(&text_model)
             .unwrap();
@@ -219,7 +219,7 @@ mod test {
             TextModel::new(ngram_length, &sigma).unwrap();
         let mut count_model = CountModel::from_sigma(&sigma, ngram_length).unwrap();
         let mut probability_model = ProbabilityModel::from_name("test").unwrap();
-        text_model.add(&raw_text[..]);
+        text_model.extend(&raw_text[..]);
         count_model
             .count_ngrams_from_text_model(&text_model)
             .unwrap();
