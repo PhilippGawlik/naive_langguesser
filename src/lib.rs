@@ -1,4 +1,3 @@
-//extern crate clap;
 #[macro_use]
 extern crate lazy_static; //compile regex only once in loops
 extern crate itertools;
