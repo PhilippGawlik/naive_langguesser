@@ -1,10 +1,9 @@
 use inferer::errors::InfererError;
-use models::errors::ProbabilityModelError;
-use text_processing::errors::TextError;
+use models::errors::CountModelError;
+use models::errors::{ProbabilityModelError, TextError};
 use std::error::Error;
 use std::fmt;
 use std::io::Error as IOError;
-use models::errors::CountModelError;
 
 #[derive(Debug)]
 pub struct ModellingError {

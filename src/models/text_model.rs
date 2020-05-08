@@ -1,8 +1,8 @@
+use models::errors::TextError;
 use models::sigma::Sigma;
 use models::symbol::{Symbol, SymbolExt};
 use std::iter::FromIterator;
 use std::str;
-use text_processing::errors::TextError;
 
 fn cast_to_string(symbols: &Vec<Symbol>) -> String {
     String::from_iter(
@@ -30,7 +30,7 @@ impl Confix {
         let confix: String = cast_to_string(&self.confix);
         format!("{}{}{}", &confix, text, &confix)
     }
-    
+
     pub fn add_to_symbols(&self, symbols: &Vec<Symbol>) -> Vec<Symbol> {
         let mut formated: Vec<Symbol> = self.confix.clone();
         formated.extend(symbols.clone());
@@ -91,7 +91,7 @@ impl TextModel {
             text: symbols,
             text_length: length,
         }
-    } 
+    }
 }
 
 pub struct NGramIterator {
@@ -119,7 +119,6 @@ impl Iterator for NGramIterator {
         ))
     }
 }
-
 
 #[cfg(test)]
 mod test {

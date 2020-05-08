@@ -16,9 +16,7 @@ pub mod config;
 mod errors;
 mod inferer;
 mod models;
-mod ngram;
 mod smoothing;
-mod text_processing;
 mod utils;
 
 /// Definition of execution modes of `naive_langguesser`
