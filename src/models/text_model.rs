@@ -4,15 +4,6 @@ use models::symbol::{Symbol, SymbolExt};
 use std::iter::FromIterator;
 use std::str;
 
-fn cast_to_string(symbols: &Vec<Symbol>) -> String {
-    String::from_iter(
-        symbols
-            .iter()
-            .map(|symbol| symbol.as_str())
-            .collect::<Vec<&str>>(),
-    )
-}
-
 struct Confix {
     confix: Vec<Symbol>,
 }
@@ -24,11 +15,6 @@ impl Confix {
             .map(|_| marker_symbol.clone())
             .collect::<Vec<Symbol>>();
         Confix { confix }
-    }
-
-    pub fn add_to_text(&self, text: &str) -> String {
-        let confix: String = cast_to_string(&self.confix);
-        format!("{}{}{}", &confix, text, &confix)
     }
 
     pub fn add_to_symbols(&self, symbols: &Vec<Symbol>) -> Vec<Symbol> {
@@ -64,14 +50,6 @@ impl TextModel {
             .filter_map(|symbol| self.sigma.contains(symbol))
             .collect::<Vec<Symbol>>();
         self.symbols.extend(extension);
-    }
-
-    pub fn get_text(&self) -> String {
-        let text: String = cast_to_string(&self.symbols);
-        match &self.set_confix {
-            Some(confix) => confix.add_to_text(&text[..]),
-            None => text,
-        }
     }
 
     pub fn get_symbols(&self) -> Vec<Symbol> {
@@ -126,52 +104,7 @@ mod test {
     use models::sigma::SigmaType;
 
     #[test]
-    fn test_alphanum_text_model1() {
-        let raw_text = String::from("abc\t");
-        let set_marker: Option<u8> = None;
-        let sigma: Sigma = Sigma::new(set_marker, SigmaType::AlphaNum);
-        let ngram_length: usize = 1;
-        let mut text_model = TextModel::new(ngram_length, &sigma).unwrap();
-        text_model.extend(&raw_text[..]);
-        let text = text_model.get_text();
-        assert_eq!("abc", &text[..]);
-    }
-
-    #[test]
-    fn test_alphanum_text_model2() {
-        let raw_text = String::from("abc\t");
-        let set_marker: Option<u8> = Some(35);
-        let sigma: Sigma = Sigma::new(set_marker, SigmaType::AlphaNum);
-        let ngram_length: usize = 3;
-        let mut text_model = TextModel::new(ngram_length, &sigma).unwrap();
-        text_model.extend(&raw_text[..]);
-        let text = text_model.get_text();
-        assert_eq!("###abc###", &text[..]);
-    }
-
-    #[test]
-    fn test_ascii_text_model() {
-        let input = String::from("abc💖");
-        let set_marker: Option<u8> = None;
-        let sigma: Sigma = Sigma::new(set_marker, SigmaType::AlphaNum);
-        let ngram_length: usize = 3;
-        let mut text_model = TextModel::new(ngram_length, &sigma).unwrap();
-        text_model.extend(&input[..]);
-        let text = text_model.get_text();
-        assert_eq!("abc", &text[..]);
-    }
-
-    #[test]
-    fn test_confix1() {
-        let marker_symbol: Symbol = Symbol::from_u8(35);
-        let confix = Confix::new(&marker_symbol, 3);
-        let text = String::from("abc");
-        let formated: String = confix.add_to_text(&text);
-        assert_eq!(String::from("###abc###"), formated);
-    }
-
-    #[test]
-    fn test_confix2() {
+    fn test_confix() {
         let marker_symbol: Symbol = Symbol::from_u8(35);
         let confix = Confix::new(&marker_symbol, 3);
         let mut symbols: Vec<Symbol> = Vec::new();
