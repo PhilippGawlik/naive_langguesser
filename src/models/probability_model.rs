@@ -147,7 +147,7 @@ impl ProbabilityModel {
         // only build regex once
         lazy_static! {
             static ref GET_NAME: Regex =
-                Regex::new(r"\./data(?:/models)?/([a-zA-Z0-9]+)\.model").unwrap();
+                Regex::new(r"\./data(?:/models)?/([a-zA-Z0-9_]+)\.model").unwrap();
         };
         Ok(String::from(
             &GET_NAME
