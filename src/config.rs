@@ -1,5 +1,5 @@
+use models::sigma::{Sigma, SigmaType};
 use smoothing::SmoothingType;
-use models::sigma::{SigmaType, Sigma};
 use Mode;
 
 /// Hold configuration for `Model` mode
