@@ -109,7 +109,6 @@ impl GuessConfig {
             "./data/models/{}/",
             matches.value_of("alphabet").unwrap()
         );
-        println!("Outpath: {}", model_dir); 
         let application_mode = Mode::Guess;
         let ngram_length = matches
             .value_of("n-gram-length")
