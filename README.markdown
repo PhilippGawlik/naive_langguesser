@@ -9,7 +9,8 @@ Predict the language of a text by ngram-based probability distributions (models)
 -  [x] adjust smoothing functions accordingly
 -  [x] move calculation of language probabilities to logspace
 -  [x] ascii
--  [x] big corpora tests
+-  [x] big corpora stress tests
+-  [ ] parallel guessing stress test
 -  [ ] utf-8 non-total model
 -  [ ] count/probability models as matrices
 -  [ ] refactoring, refactoring, refactoring
