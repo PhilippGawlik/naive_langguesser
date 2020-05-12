@@ -1,9 +1,7 @@
+use errors::UtilError;
 use regex::Regex;
 use std::fs;
 use std::path::Path;
-use utils::errors::UtilError;
-
-pub mod errors;
 
 /// Collect paths to all files of a type `.model` from a folder
 pub fn get_model_paths(dir: &str) -> Result<Vec<String>, UtilError> {

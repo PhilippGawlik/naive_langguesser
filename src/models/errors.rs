@@ -1,8 +1,7 @@
-use smoothing::errors::SmoothingError;
+use errors::{SmoothingError, UtilError};
 use std::error::Error;
 use std::fmt;
 use std::io::Error as IOError;
-use utils::errors::UtilError;
 
 #[derive(Debug)]
 pub struct NGramModelError {

@@ -1,8 +1,6 @@
+use errors::SmoothingError;
 use models::ngram_model::NGramModel;
-use smoothing::errors::SmoothingError;
 use std::collections::HashMap;
-
-pub mod errors;
 
 /// Present types of smoothing
 ///
@@ -56,12 +54,12 @@ fn add_one_to_ngram_model(ngram_model: &mut NGramModel) -> Result<(), SmoothingE
 fn add_one_to_hashmap(
     model: &mut HashMap<String, f64>,
     total: f64,
-    vocabulary_size: f64
+    vocabulary_size: f64,
 ) -> Result<(), SmoothingError> {
     let normalization_term: f64 = total / (total + vocabulary_size);
     for (_ngram, count) in model.iter_mut() {
         *count = (*count + 1.0) * normalization_term;
-    };
+    }
     Ok(())
 }
 
@@ -79,13 +77,13 @@ fn witten_bell_on_hashmap(
     model: &mut HashMap<String, f64>,
     total: f64,
     seen: f64,
-    unseen: f64
+    unseen: f64,
 ) -> Result<(), SmoothingError> {
     if seen == 0.0 || unseen == 0.0 {
-        return Ok(())
+        return Ok(());
     };
-    let normalization_term: f64 =  total / (total + seen);
-    let smoothed_unseen: f64 = (seen/ unseen) * normalization_term;
+    let normalization_term: f64 = total / (total + seen);
+    let smoothed_unseen: f64 = (seen / unseen) * normalization_term;
     for (_ngram, count) in model.iter_mut() {
         if *count > 0.0 {
             *count = *count * normalization_term;
@@ -112,18 +110,9 @@ mod test {
         let unseen: f64 = 1.0;
 
         witten_bell_on_hashmap(&mut model, total, seen, unseen).unwrap();
-        assert_eq!(
-            &1.3333333333333333,
-            model.get("a").unwrap()
-        );
-        assert_eq!(
-            &1.3333333333333333,
-            model.get("b").unwrap()
-        );
-        assert_eq!(
-            &1.3333333333333333,
-            model.get("c").unwrap()
-        );
+        assert_eq!(&1.3333333333333333, model.get("a").unwrap());
+        assert_eq!(&1.3333333333333333, model.get("b").unwrap());
+        assert_eq!(&1.3333333333333333, model.get("c").unwrap());
     }
 
     #[test]
@@ -138,18 +127,9 @@ mod test {
         let unseen: f64 = 0.0;
 
         witten_bell_on_hashmap(&mut model, total, seen, unseen).unwrap();
-        assert_eq!(
-            &1.0000000000000000,
-            model.get("a").unwrap()
-        );
-        assert_eq!(
-            &1.0000000000000000,
-            model.get("b").unwrap()
-        );
-        assert_eq!(
-            &1.0000000000000000,
-            model.get("c").unwrap()
-        );
+        assert_eq!(&1.0000000000000000, model.get("a").unwrap());
+        assert_eq!(&1.0000000000000000, model.get("b").unwrap());
+        assert_eq!(&1.0000000000000000, model.get("c").unwrap());
     }
 
     #[test]
@@ -164,18 +144,9 @@ mod test {
         let unseen: f64 = 3.0;
 
         witten_bell_on_hashmap(&mut model, total, seen, unseen).unwrap();
-        assert_eq!(
-            &0.0000000000000000,
-            model.get("a").unwrap()
-        );
-        assert_eq!(
-            &0.0000000000000000,
-            model.get("b").unwrap()
-        );
-        assert_eq!(
-            &0.0000000000000000,
-            model.get("c").unwrap()
-        );
+        assert_eq!(&0.0000000000000000, model.get("a").unwrap());
+        assert_eq!(&0.0000000000000000, model.get("b").unwrap());
+        assert_eq!(&0.0000000000000000, model.get("c").unwrap());
     }
 
     #[test]
@@ -187,18 +158,9 @@ mod test {
         let total: f64 = 4.0;
         let vocabulary_size: f64 = 3.0;
         add_one_to_hashmap(&mut model, total, vocabulary_size).unwrap();
-        assert_eq!(
-            &1.7142857142857142,
-            model.get("a").unwrap()
-        );
-        assert_eq!(
-            &1.7142857142857142,
-            model.get("b").unwrap()
-        );
-        assert_eq!(
-            &0.5714285714285714,
-            model.get("c").unwrap()
-        );
+        assert_eq!(&1.7142857142857142, model.get("a").unwrap());
+        assert_eq!(&1.7142857142857142, model.get("b").unwrap());
+        assert_eq!(&0.5714285714285714, model.get("c").unwrap());
     }
 
     #[test]
@@ -210,18 +172,9 @@ mod test {
         let total: f64 = 0.0;
         let vocabulary_size: f64 = 3.0;
         add_one_to_hashmap(&mut model, total, vocabulary_size).unwrap();
-        assert_eq!(
-            &0.0000000000000000,
-            model.get("a").unwrap()
-        );
-        assert_eq!(
-            &0.0000000000000000,
-            model.get("b").unwrap()
-        );
-        assert_eq!(
-            &0.0000000000000000,
-            model.get("c").unwrap()
-        );
+        assert_eq!(&0.0000000000000000, model.get("a").unwrap());
+        assert_eq!(&0.0000000000000000, model.get("b").unwrap());
+        assert_eq!(&0.0000000000000000, model.get("c").unwrap());
     }
 
     #[test]
@@ -233,17 +186,8 @@ mod test {
         let total: f64 = 3.0;
         let vocabulary_size: f64 = 3.0;
         add_one_to_hashmap(&mut model, total, vocabulary_size).unwrap();
-        assert_eq!(
-            &1.0000000000000000,
-            model.get("a").unwrap()
-        );
-        assert_eq!(
-            &1.0000000000000000,
-            model.get("b").unwrap()
-        );
-        assert_eq!(
-            &1.0000000000000000,
-            model.get("c").unwrap()
-        );
+        assert_eq!(&1.0000000000000000, model.get("a").unwrap());
+        assert_eq!(&1.0000000000000000, model.get("b").unwrap());
+        assert_eq!(&1.0000000000000000, model.get("c").unwrap());
     }
 }

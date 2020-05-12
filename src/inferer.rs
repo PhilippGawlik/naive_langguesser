@@ -1,4 +1,4 @@
-use inferer::errors::InfererError;
+use errors::InfererError;
 use models::probability_model::ProbabilityModel;
 use models::text_model::TextModel;
 use std::sync::mpsc::{channel, Receiver, Sender};
@@ -6,7 +6,6 @@ use std::sync::Arc;
 use std::thread;
 use utils::{get_model_paths, sort_by_second_element};
 
-pub mod errors;
 
 /// Infer text language according to language models
 /// Inferring is done based on text's ngrams of specified `ngram_length`.  Inferring will be done in parallel for the present `models` if `in_parallel` is true.

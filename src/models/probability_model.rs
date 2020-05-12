@@ -147,7 +147,7 @@ impl ProbabilityModel {
         // only build regex once
         lazy_static! {
             static ref GET_NAME: Regex =
-                Regex::new(r"\./data(?:/models(/ascii|/alphanum))?/([a-zA-Z0-9_]+)\.model").unwrap();
+                Regex::new(r"\./data(?:/models(/ascii|/alphanum)?)?/([a-zA-Z0-9_]+)\.model").unwrap();
         };
         Ok(String::from(
             &GET_NAME
@@ -246,7 +246,7 @@ mod test {
 
     #[test]
     fn test_probability_model4() {
-        let path = String::from("./data/test.model");
+        let path = String::from("./data/models/test.model");
         let probability_model = ProbabilityModel::from_file(&path[..]).unwrap();
         assert_eq!(&0.13530510588511946, probability_model.get("a").unwrap());
         assert_eq!(&0.08394062078272607, probability_model.get("b").unwrap());

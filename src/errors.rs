@@ -1,4 +1,3 @@
-use inferer::errors::InfererError;
 use models::errors::CountModelError;
 use models::errors::{ProbabilityModelError, TextError};
 use std::error::Error;
@@ -101,5 +100,122 @@ impl From<TextError> for GuessingError {
     fn from(err: TextError) -> Self {
         let desc = format!("Text processing error: {}", err.to_string());
         GuessingError::new(&desc[..])
+    }
+}
+
+#[derive(Debug)]
+pub struct InfererError {
+    details: String,
+}
+
+impl InfererError {
+    pub fn new(msg: &str) -> InfererError {
+        InfererError {
+            details: msg.to_string(),
+        }
+    }
+}
+
+impl fmt::Display for InfererError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.details)
+    }
+}
+
+impl Error for InfererError {
+    fn description(&self) -> &str {
+        &self.details
+    }
+}
+
+impl From<UtilError> for InfererError {
+    fn from(err: UtilError) -> Self {
+        let desc = format!("UtilError: {}", err.to_string());
+        InfererError::new(&desc[..])
+    }
+}
+
+impl From<ProbabilityModelError> for InfererError {
+    fn from(err: ProbabilityModelError) -> Self {
+        let desc = format!("ProbabilityModelError: {}", err.to_string());
+        InfererError::new(&desc[..])
+    }
+}
+
+
+#[derive(Debug)]
+pub struct UtilError {
+    details: String
+}
+
+impl UtilError {
+    pub fn new(msg: &str) -> UtilError {
+        UtilError{details: msg.to_string()}
+    }
+}
+
+impl fmt::Display for UtilError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.details)
+    }
+}
+
+impl Error for UtilError {
+    fn description(&self) -> &str {
+        &self.details
+    }
+}
+
+impl From<IOError> for UtilError {
+    fn from(err: IOError) -> Self {
+        let desc = format!("io::Error: {}", err.to_string());
+        UtilError::new(&desc[..])
+    }
+}
+
+impl From<std::boxed::Box<dyn std::error::Error>> for UtilError {
+    fn from(err: std::boxed::Box<dyn std::error::Error>) -> Self {
+        let desc = format!("{}", err.to_string());
+        UtilError::new(&desc[..])
+    }
+}
+
+
+#[derive(Debug)]
+pub struct SmoothingError {
+    details: String,
+}
+
+impl SmoothingError {
+    pub fn new(msg: &str) -> SmoothingError {
+        SmoothingError {
+            details: msg.to_string(),
+        }
+    }
+}
+
+impl fmt::Display for SmoothingError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.details)
+    }
+}
+
+impl Error for SmoothingError {
+    fn description(&self) -> &str {
+        &self.details
+    }
+}
+
+impl From<IOError> for SmoothingError {
+    fn from(err: IOError) -> Self {
+        let desc = format!("io::Error: {}", err.to_string());
+        SmoothingError::new(&desc[..])
+    }
+}
+
+impl From<UtilError> for SmoothingError {
+    fn from(err: UtilError) -> Self {
+        let desc = format!("UtilError: {}", err.to_string());
+        SmoothingError::new(&desc[..])
     }
 }
