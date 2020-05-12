@@ -1,6 +1,6 @@
 # Naive Language Guesser
 
-Predict the language of a text by ngram-based probability distributions (models). Do so by generating some language models from language text example files with the ``model`` command. Subsequently apply the generated language models to an unclassified text artifact by using the ``guess`` command. The outcome will rank the existing language models from the most likely fit for the artifact in descending order.
+Predict the language of a text by using ngram-based probability distributions (models). Do so by generating some language models from language text example files with the ``model`` command. Subsequently apply the generated language models to an unclassified text artifact by using the ``guess`` command. The outcome will rank the existing language models from the most likely fit for the artifact in descending order.
 
 
 ## Todo
