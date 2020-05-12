@@ -3,7 +3,7 @@
 Predict the language of a text by ngram-based probability distributions (models). Do so by generating some language models from language text example files with the ``model`` command. Subsequently apply the generated language models to an unclassified text artifact by using the ``guess`` command. The outcome will rank the existing language models from the most likely fit for the artifact in descending order.
 
 
-##Todo
+## Todo
 
 -  [x] add a leveled ngram model (current model is flat) 
 -  [x] adjust smoothing functions accordingly
@@ -54,39 +54,40 @@ OPTIONS:
 ```
 For more information about the flags/options see section **Modes**.
 
-##Modes
+## Modes
 
 **Naive LanguageGuesser** provides two modes of operation: **model** and **guess**.
 
 The following aspects are relevant for both modes:
 
-#####Alphabet
+##### Alphabet
 
 The alphabet concerns the set of symbols the language model is based upon. All symbols not included in the alphabet are ignored.
 
 Currently the following alphabets are supported:
 
 * `alphanum`: consists of lower/capital letters and numbers 
-* `ascii`: consists of the set of ascii symbols (without control signs; so 32-126)
+* `ascii`: consists of the set of ascii symbols (without control symbols; so 32-126)
 
-#####NGram length
+##### NGram length
 
 The ngram length specifies the length of the ngrams the language model is build upon and the language guessing is performed upon. We recommend `0 < n <= 3`.
 
-#####Text Marker
+##### Text Marker
 
-If the ngram length is `1 < n` the information about being at the begin or end of of a string `abc` would be lost, e.g. `n = 2` and the string being decomposed into `{ab, bc}`. If the flag `--set-marker` is set, a text marker marks the beginning and end of the string to save the information, e.g. textmarker `#` is added to `abc` as in `##abc##` to hold information about being at the begin or end as in `{##, #a, ab, bc, c#, ##}`.
+If the ngram length is `1 < n` the information about being at the begin or end of a string `abc` would be lost, e.g. `n = 2` and the string being decomposed into `{ab, bc}`. If the flag `--set-marker` is set, a text marker marks the beginning and end of the string to save the information, e.g. textmarker `#` is added to `abc` as in `##abc##` to hold information about being at the begin or end as in `{##, #a, ab, bc, c#, ##}`.
    
-###Model Mode
+### Model Mode
 
 Generate a probability distribution model for a language example, based on ngrams to a certain length and an alphabet of symbols.
 
-#####Smoothing
+##### Smoothing
 
-Smoothing is performed to deal with unseen ngrams. In case of unseen ngrams a portion of the seen ngram counts is redistributed to the seen ngram counts. By doing so, the language models are able to deal with unseen ngrams when applied to a text artifact.
+Smoothing is performed to deal with unseen ngrams. In case of unseen ngrams, a portion of the seen ngram counts is redistributed to the unseen ngram counts. By doing so, the language models are able to deal with unseen ngrams when applied to a text artifact.
 
 Currently the followin smoothing techniques are provided:
 
+* `no`: no smoothing is done
 * `add_one`: add one to each seen/unseen ngram and normalise
 * `witten_bell`: use the count of ngrams seen once to estimate the count of ngrams not seen
 
@@ -97,7 +98,7 @@ Daniel Jurafsky / James H. Martin
 page 206: Smoothing
 ISBN 0-13-095069-6*
 
-###Guess Mode
+### Guess Mode
 
 Calculate the most likely language for a unclassified language artifact, based on a set of existing language models. The existing language models can be constructed with `model` command. The outcome will rank the existing language models from the most likely fit descending.
 
@@ -107,7 +108,7 @@ The calculation is done in logspace to avoid vanishingly small probabilities. Th
 ##### Parallel processing
 The calculation of the language models probabilities for a text artifact is done in parallel for all language models.
 
-##Testing
+## Testing
 For quick testing the repository includes three versions of the declaration of human rights (german, english and spanish) in `data/`, that can be used to build language models. 
 
 For extensive testing we used the parallel corpus of EuroParl 
@@ -121,7 +122,7 @@ CPU: Intel® Core™ i7-8565U CPU @ 1.80GHz × 8
 Disk: 928,0 GB
 ```
 
-##Contribution
+## Contribution
 
 I like to express my gratitude for the contribution of Jean VanCoppenolle to this project in terms of string encoding, process optimisation and Rust-language specific coding advices. I added notes in the source code where his contributions are applied.
 Thx Jean! :-)
