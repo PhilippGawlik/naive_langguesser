@@ -1,12 +1,17 @@
 use std::str;
 
+/// Deduce the symbols amount of bytes from first byte
+///
+/// *Note*: This approach is provided by Jean VanCoppenolle. See README for more information.
 #[inline]
-/// Todo mention Jean
 pub fn char_width(byte: u8) -> usize {
     const TABLE: [usize; 16] = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 3, 4];
     TABLE[(byte >> 4) as usize]
 }
 
+/// Group bytes of a symbol
+///
+/// A utf-8 symbol or grapheme cluster can contain multiple bytes, e.g. additional diacritics.
 #[derive(PartialEq, Eq, Hash, Debug, Clone)]
 pub struct Symbol {
     pub symbol: Vec<u8>,
@@ -45,6 +50,11 @@ impl Symbol {
     }
 }
 
+/// Iterate the symbols of a byte represented text
+///
+/// * `idx` - iterator position in text
+/// * `text` - text as vector of symbols
+/// * `text_length` - break condition of iterator
 pub struct SymbolIterator {
     pub idx: usize,
     pub text: Vec<u8>,
@@ -68,10 +78,14 @@ impl Iterator for SymbolIterator {
     }
 }
 
+/// Definition for symbol interface
 pub trait SymbolExt {
     fn get_symbols(&self) -> SymbolIterator;
 }
 
+/// Implementation of symbol interface for str type
+///
+/// *Note*: This approach is inspired by Jean VanCoppenolle. See README for more information.
 impl SymbolExt for str {
     fn get_symbols(&self) -> SymbolIterator {
         SymbolIterator {

@@ -3,6 +3,13 @@ use models::symbol::Symbol;
 use std::collections::HashSet;
 
 
+/// Definition of sigma/alphabet types
+///
+/// # Types:
+/// 
+/// * `AlphaNum` - consists of lower/capital letters and numbers
+/// * `Ascii` - consists of the set of ascii symbols (without control symbols; so 32-126)
+/// * `Test` - just `abc` for internal testing purposes
 #[derive(Clone)]
 pub enum SigmaType {
     AlphaNum,
@@ -11,6 +18,7 @@ pub enum SigmaType {
 }
 
 impl SigmaType {
+    /// provide sigma as Set of Symbols
     pub fn get_symbols(&self) -> HashSet<Symbol> {
         match self {
             SigmaType::AlphaNum => {
@@ -44,6 +52,13 @@ impl SigmaType {
     }
 }
 
+/// Encapsulates sigma relevant information
+///
+/// # Sigma
+///
+/// * `set_marker`: specifiy if add marker symbol to alphabet
+/// * `sigma_type`: hold to sigma type
+/// * `sigma`: hold sigma as vector of symbols
 #[derive(Clone)]
 pub struct Sigma {
     pub set_marker: Option<Symbol>,
@@ -68,6 +83,7 @@ impl Sigma {
         }
     }
 
+    /// check if sigma holds symbol
     pub fn contains(&self, symbol: Symbol) -> Option<Symbol> {
         match self.sigma.contains(&symbol) {
             true => Some(symbol.clone()),
@@ -101,15 +117,24 @@ impl Sigma {
     }
 }
 
+/// Generate all ngrams of certain length from sigma
+///
+/// Generate ngrams by permutation of unigrams up to a certain length.
+///
+/// # Fields
+///
+/// * `unigrams` - base of ngram generation
 pub struct NGramGenerator {
     pub unigrams: Vec<String>,
 }
 
 impl NGramGenerator {
+    /// generate ngrams of certain length
     pub fn generate(&self, ngram_length: usize) -> Vec<String> {
         self.recursion(self.unigrams.clone(), ngram_length - 1)
     }
 
+    /// recursive generator
     pub fn recursion(&self, ngrams: Vec<String>, index: usize) -> Vec<String> {
         match index {
             0 => ngrams,
@@ -126,10 +151,14 @@ impl NGramGenerator {
     }
 }
 
+/// Definition for ngram interface
 pub trait NGramExt {
     fn ngrams(&self, n: usize) -> Vec<String>;
 }
 
+/// Implementation of ngram interface for sigma
+///
+/// *Note*: This approach is inspired by Jean VanCoppenolle. See README for more information.
 impl NGramExt for Sigma {
     fn ngrams(&self, ngram_length: usize) -> Vec<String> {
         assert!(ngram_length > 0);
