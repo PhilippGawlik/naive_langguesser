@@ -32,7 +32,7 @@ impl SigmaType {
                 sigma.extend(lower);
                 sigma
             }
-            SigmaType::Ascii => (0..=127)
+            SigmaType::Ascii => (32..=126)
                 .into_iter()
                 .map(|byte| Symbol::from_u8(byte))
                 .collect(),
