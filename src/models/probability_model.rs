@@ -147,13 +147,13 @@ impl ProbabilityModel {
         // only build regex once
         lazy_static! {
             static ref GET_NAME: Regex =
-                Regex::new(r"\./data(?:/models)?/([a-zA-Z0-9_]+)\.model").unwrap();
+                Regex::new(r"\./data(?:/models(/ascii|/alphanum))?/([a-zA-Z0-9_]+)\.model").unwrap();
         };
         Ok(String::from(
             &GET_NAME
                 .captures_iter(path)
                 .next()
-                .expect("Can't parse model name from path")[1],
+                .expect("Can't parse model name from path")[2],
         ))
     }
 }

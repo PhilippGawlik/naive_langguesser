@@ -35,7 +35,8 @@ impl ModelConfig {
         let filename = matches.value_of("path").unwrap().to_string();
         let modelname = matches.value_of("model-name").unwrap().to_string();
         let outpath = format!(
-            "data/models/{}.model",
+            "data/models/{}/{}.model",
+            matches.value_of("alphabet").unwrap(),
             matches.value_of("model-name").unwrap().to_string()
         );
         let application_mode = Mode::Model;
@@ -88,7 +89,7 @@ impl ModelConfig {
 /// * `in_parallel` - if set, causes parallel language model evaluation of text
 pub struct GuessConfig {
     pub filename: String,
-    pub model_dir: &'static str,
+    pub model_dir: String,
     pub application_mode: Mode,
     pub sigma: Sigma,
     pub ngram_length: usize,
@@ -104,7 +105,11 @@ impl GuessConfig {
     /// * `matches` - `Clap` references holding cli arguments
     pub fn new(matches: &clap::ArgMatches) -> GuessConfig {
         let filename = matches.value_of("path").unwrap().to_string();
-        let model_dir = "./data/models/";
+        let model_dir = format!(
+            "./data/models/{}/",
+            matches.value_of("alphabet").unwrap()
+        );
+        println!("Outpath: {}", model_dir); 
         let application_mode = Mode::Guess;
         let ngram_length = matches
             .value_of("n-gram-length")
