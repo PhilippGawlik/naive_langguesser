@@ -10,6 +10,7 @@ Predict the language of a text by using ngram-based probability distributions (m
 -  [x] move calculation of language probabilities to logspace
 -  [x] ascii
 -  [x] big corpora stress tests
+-  [ ] analyze with clippy
 -  [ ] parallel guessing stress test
 -  [ ] utf-8 non-total model
 -  [ ] count/probability models as matrices
